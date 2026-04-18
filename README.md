@@ -38,7 +38,7 @@ Spec-Driven Development orchestrator for Claude Code. Turns any feature prompt i
 ## Install
 
 ```
-/plugin marketplace add github:nushey/sdd-flow
+/plugin marketplace add nushey/sdd-flow
 /plugin install sdd-flow@sdd-flow
 ```
 
