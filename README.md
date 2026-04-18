@@ -15,6 +15,7 @@ Spec-Driven Development orchestrator for Claude Code. Turns any feature prompt i
 |-----------|------|---------|
 | `sdd` | Skill | Orchestrator skill — invoked by `/sdd <feature>` |
 | `create-agentsmd` | Skill | Authors `AGENTS.md` for fresh projects |
+| `pr-creation` | Skill | PR body standard used by the Verifier — value-oriented, minimal technical noise |
 | `sdd-pm` | Subagent | Defines scope, user stories, acceptance criteria |
 | `sdd-architect` | Subagent | Designs the HOW; bootstraps `AGENTS.md` if missing |
 | `sdd-po` | Subagent | Decomposes into atomic sequential tasks |

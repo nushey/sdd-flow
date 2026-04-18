@@ -83,6 +83,11 @@ The Orchestrator reads the main table for sequencing and reads the Fixes section
 - A task is achievable by a developer reading ONLY its own file + `design.md` (+ optionally `scope.md` for business intent).
 - A task produces ONE commit.
 
+## Granularity — group, don't atomize
+- If several small files serve the same logical concern (e.g. a set of helper/utility classes that are all prerequisites for the same feature), group them into ONE task. Each file individually being small is a red flag for over-splitting.
+- A task must justify the overhead of a cold-start agent. Rule of thumb: if the total change is under ~3 files and ~150 lines combined, ask whether it belongs to an adjacent task before creating a new one.
+- Infrastructure tasks that are structurally coupled (e.g. "wire host" + "add tool") belong in the same task unless they genuinely need different expertise or have different acceptance criteria.
+
 ## Sequence
 - Order tasks so each one builds cleanly on the previous. No parallel execution.
 - Don't over-split. A 10-line change is one task, not three.
