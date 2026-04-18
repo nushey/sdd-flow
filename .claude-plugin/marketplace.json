@@ -1,0 +1,15 @@
+{
+  "name": "sdd-flow",
+  "owner": {
+    "name": "Nahuel Zeballos",
+    "email": "zeballosnahuelfd@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "sdd-flow",
+      "source": "./",
+      "description": "Spec-Driven Development flow: PM, Architect, PO, Developer, Verifier subagents coordinated via the .spec/ folder",
+      "version": "0.1.0"
+    }
+  ]
+}

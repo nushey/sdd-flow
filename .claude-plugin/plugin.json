@@ -1,0 +1,22 @@
+{
+  "name": "sdd-flow",
+  "version": "0.1.0",
+  "description": "Spec-Driven Development orchestrator for Claude Code — PM, Architect, PO, Developer, Verifier subagents coordinated via the .spec/ folder",
+  "author": {
+    "name": "Nahuel Zeballos",
+    "email": "zeballosnahuelfd@gmail.com"
+  },
+  "homepage": "https://github.com/nushey/sdd-flow",
+  "repository": "https://github.com/nushey/sdd-flow",
+  "license": "MIT",
+  "keywords": [
+    "sdd",
+    "spec-driven-development",
+    "orchestrator",
+    "subagents",
+    "workflow",
+    "pm",
+    "architect",
+    "verifier"
+  ]
+}

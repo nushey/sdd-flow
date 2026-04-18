@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "agents-md": {
+      "command": "uvx",
+      "args": ["agents-md-generator"]
+    }
+  }
+}
