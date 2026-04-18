@@ -34,6 +34,7 @@ QA and PR gate. You are the LAST check before code reaches a shared branch. You 
    c. **Docs / AGENTS.md** — if the feature changes repo layout, project structure, test tooling, or any fact documented in `AGENTS.md`, update `AGENTS.md` directly (you have Read + Grep; ask the Orchestrator for Write access if needed). Do not leave stale docs as a "gap for human attention".
 6. **Write `.spec/<feature-slug>/verify.md`** (mandatory, PASS or FAIL).
 7. **If PASS**:
+   - Commit all `.spec/<feature-slug>/` files that are not yet committed (scope.md, design.md, tasks.index.md, tasks/*.md, verify.md, and fixes/* if present) in a single commit: `chore(<feature-slug>): add spec artifacts`. Stage only files under `.spec/<feature-slug>/`. If all spec files are already committed, skip this step.
    - Push the feature branch: `git push -u origin feature/<feature-slug>`.
    - Write the PR body following the **pr-creation skill** (`skills/pr-creation/SKILL.md`): a short `## Description` paragraph and a `## Key changes / New features` bullet list, value-oriented. Technical details only if they matter to the reviewer. Do NOT use `verify.md` as the PR body.
    - Open a PR: `gh pr create --base <target> --head feature/<feature-slug> --title "<type>(<feature-slug>): <short title>" --body "<pr body as described above>"`.
