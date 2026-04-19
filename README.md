@@ -28,9 +28,16 @@ Spec-Driven Development orchestrator for Claude Code. Turns any feature prompt i
 ## Prerequisites
 
 - **Claude Code** (latest).
-- **`uv`** — required for the bundled `agents-md` MCP server. Install with:
+- **`uv`** — required for the bundled `agents-md` MCP server.
+
+  **Linux / macOS:**
   ```bash
   curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
+
+  **Windows (PowerShell):**
+  ```powershell
+  powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
   ```
 - **Git + GitHub CLI (`gh`)** — the Verifier opens PRs via `gh pr create`.
 
