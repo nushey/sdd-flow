@@ -111,6 +111,18 @@ Detect progress by artifacts present in `.spec/<feature-slug>/`:
 - Only `intake.md` → go to Phase 1.
 
 ### 2. Phase 0 — Triage (Orchestrator-only, no subagent)
+
+**Step A — Resolve PR target branch (always, before scope questions):**
+
+Do this silently, no subagent needed:
+1. Read `AGENTS.md` / `CLAUDE.md` at the project root (if they exist) and look for a declared PR target (e.g. `pr_target:` field, or text like "PRs target `dev`"). If found, record it as the resolved branch.
+2. If not found, run `git ls-remote --heads origin dev develop` — use the first that exists.
+3. If still unresolved, add one question to your triage batch (below): **"Which branch should the PR target? (e.g. `dev`, `develop`, `main`)"**
+4. If the user replies "just infer it" → default to `main`.
+
+Record the resolved branch in `intake.md` under `## PR target branch` (create the file if needed).
+
+**Step B — Scope triage:**
 Decide if the raw prompt is clear enough. Ask the user ONLY about the following, and ONLY if genuinely unclear from the prompt:
 - **Scope boundary**: new feature or change to existing behavior?
 - **Surface**: frontend / backend / both / infra / docs?
@@ -119,17 +131,20 @@ Decide if the raw prompt is clear enough. Ask the user ONLY about the following,
 
 Rules:
 - Keep it brief — aim for the minimum. No hard cap, but if you find yourself reaching for a fifth question, reconsider whether it belongs to PM or Architect.
-- Crisp, multiple-choice when possible. Batch them — single round, no back-and-forth.
+- Crisp, multiple-choice when possible. Batch them (including the branch question if needed) — single round, no back-and-forth.
 - Use `AskUserQuestion` when available.
-- If the user replies "just infer it" → stop asking, proceed.
+- If the user replies "just infer it" → stop asking, proceed with defaults.
 - Do NOT ask about implementation, patterns, stack, folder structure (Architect). Do NOT ask about UI copy, styling, validation rules (PM).
 
-If you asked questions, create `.spec/<feature-slug>/` (mkdir -p) and write `intake.md`:
+If you asked questions OR if you resolved the PR target branch, create `.spec/<feature-slug>/` (mkdir -p) and write `intake.md`:
 ```markdown
 # Intake: <Feature Name>
 
 ## Raw prompt
 <verbatim user prompt>
+
+## PR target branch
+<branch-name>
 
 ## Clarifications
 - Q: <question>
@@ -190,7 +205,8 @@ You spawn ONE fresh developer subagent per task. Never reuse a developer context
 - Project root absolute path.
 - `.spec/<feature-slug>/` absolute path.
 - Feature branch name.
-- Instruction: "Run verification per your agent definition. On PASS, push and open the PR. Return your short 'Done' report (PASS/FAIL + PR URL if PASS, or failure points if FAIL)."
+- PR target branch: if resolved in Phase 0 (present in `intake.md` under `## PR target branch`), pass it explicitly: "PR target branch: `<branch>`". If not available, write "PR target branch: not pre-resolved — use your resolution logic."
+- Instruction: "Run verification per your agent definition. On PASS, push and open the PR targeting the branch specified above. Return your short 'Done' report (PASS/FAIL + PR URL if PASS, or failure points if FAIL)."
 
 Wait. Read only the short report.
 - **PASS**: verifier pushed the branch and opened a PR. Report the PR URL to the user.

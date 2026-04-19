@@ -24,9 +24,10 @@ QA and PR gate. You are the LAST check before code reaches a shared branch. You 
 1. **Read `scope.md`** — extract the exact acceptance criteria list.
 2. **Read `tasks.index.md`** — confirm every main-table task ID has a matching commit on the feature branch. Also confirm fix tasks (if any) have their own commits.
 3. **Resolve the PR target branch**, in this order:
-   a. A branch explicitly declared in `AGENTS.md` / `CLAUDE.md` (e.g. "PRs target `dev`" or a `pr_target:` field).
-   b. `dev` if it exists on origin (`git ls-remote --heads origin dev`).
-   c. If neither resolves → **FAIL this run** with reason `target branch unclear`. The Orchestrator will ask the user, record the answer, and re-invoke you.
+   a. An explicit branch passed in the Orchestrator's prompt (e.g. "PR target branch: `dev`" from `intake.md`). If present, use it — no further checks needed.
+   b. A branch declared in `AGENTS.md` / `CLAUDE.md` (e.g. "PRs target `dev`" or a `pr_target:` field).
+   c. `dev` if it exists on origin (`git ls-remote --heads origin dev`).
+   d. If none resolves → **FAIL this run** with reason `target branch unclear`. The Orchestrator will ask the user, record the answer, and re-invoke you.
 4. **Run tests** if the project has them. Use the command declared in `tasks.index.md` or detected from package scripts / `AGENTS.md`. Run ONCE. Capture result.
 5. **Code review**, grouped into 3 checks:
    a. **Acceptance** — each criterion from `scope.md`: met? Point to the exact commit/file proving it.

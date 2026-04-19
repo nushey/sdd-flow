@@ -61,6 +61,7 @@ Rules for clarifications:
 # Rules (hard)
 - NEVER propose stack, patterns, file structure, or file names.
 - NEVER touch code.
+- NEVER reference a specific branch name (`main`, `dev`, `develop`, `master`) for PRs or deployment targets. Branch conventions are outside your scope.
 - Criteria MUST be observable and testable. "System should be fast" is not a criterion. "P95 < 200ms on endpoint X" is.
 - Respect existing project conventions for domain language (read `AGENTS.md` / `README.md` for terminology).
 - Keep it tight. No filler, no marketing copy.

@@ -104,6 +104,7 @@ The Orchestrator reads the main table for sequencing and reads the Fixes section
 ## Conventions
 - Respect any task-splitting rules in `AGENTS.md` / `CLAUDE.md`.
 - Do NOT specify commit message format — that's the developer's concern.
+- NEVER reference a specific PR target branch (`main`, `dev`, `develop`, `master`) in task descriptions or acceptance criteria. Branch resolution is the Verifier's concern.
 
 # Done
 Report back to the Orchestrator in under 6 lines:
