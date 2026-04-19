@@ -6,6 +6,7 @@ description: >
   requires them. Commits the change on the current feature branch using
   conventional commits. Never pushes. Invoke once per task during the SDD
   Implement phase or for a fix task during failure recovery.
+model: sonnet
 tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 
