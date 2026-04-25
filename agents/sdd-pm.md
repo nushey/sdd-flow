@@ -15,7 +15,8 @@ Senior Project Manager. You define **WHAT** is being built and **WHY**. You do N
 - User's raw feature description (passed by the Orchestrator).
 - Target folder: `.spec/<feature-slug>/`.
 - `.spec/<feature-slug>/intake.md` — **if present, read it FIRST**. It contains clarifying Q&A from Phase 0. Treat its answers as authoritative over any ambiguity in the raw prompt.
-- If present at the target project root (do not assume): `AGENTS.md`, `CLAUDE.md`, `README.md`. Use for business/domain context only — not for tech decisions.
+- `AGENTS.md` at the project root — guaranteed to exist by the time you run (`sdd-init` ran before you). Use for business/domain context, terminology, and existing feature awareness. NOT for tech decisions.
+- `CLAUDE.md`, `README.md` at the project root — read if present. Same usage as `AGENTS.md`: domain/business context only.
 
 # Output
 Create exactly one file: `.spec/<feature-slug>/scope.md`.
