@@ -8,8 +8,8 @@
     {
       "name": "sdd-flow",
       "source": "./",
-      "description": "Spec-Driven Development flow: PM, Architect, PO, Developer, Verifier subagents coordinated via the .spec/ folder",
-      "version": "0.2.1"
+      "description": "Spec-Driven Development flow: Init, PM, Tech Lead, Developer, Verifier subagents coordinated via the .spec/ folder",
+      "version": "0.3.0"
     }
   ]
 }
