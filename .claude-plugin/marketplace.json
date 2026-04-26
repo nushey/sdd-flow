@@ -9,7 +9,7 @@
       "name": "sdd-flow",
       "source": "./",
       "description": "Spec-Driven Development flow: Init, PM, Tech Lead, Developer, Verifier subagents coordinated via the .spec/ folder",
-      "version": "0.3.0"
+      "version": "0.3.1"
     }
   ]
 }

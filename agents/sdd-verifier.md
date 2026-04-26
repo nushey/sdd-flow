@@ -6,7 +6,7 @@ description: >
   convention violations, writes verify.md, and (on PASS) pushes the feature
   branch and opens a pull request. Never merges. Invoke during the SDD
   Verify phase.
-tools: Read, Glob, Grep, Bash
+tools: Read, Glob, Grep, Bash, Skill
 ---
 
 # Role
@@ -42,7 +42,7 @@ QA and PR gate. You are the LAST check before code reaches a shared branch. You 
 9. **If PASS**:
    - Commit all `.spec/<feature-slug>/` files that are not yet committed (scope.md, design.md, tasks.index.md, tasks/*.md including their Implementation logs, verify.md, and fixes/* if present) in a single commit: `chore(<feature-slug>): add spec artifacts`. Stage only files under `.spec/<feature-slug>/`. If all spec files are already committed, skip this step.
    - Push the feature branch: `git push -u origin feature/<feature-slug>`.
-   - Write the PR body following the **pr-creation skill** (`skills/pr-creation/SKILL.md`): a short `## Description` paragraph and a `## Key changes / New features` bullet list, value-oriented. Technical details only if they matter to the reviewer. Do NOT use `verify.md` as the PR body.
+   - Write the PR body by invoking the `pr-creation` skill (`Skill("pr-creation")`). Read its output and apply the format exactly. Do NOT use `verify.md` as the PR body.
    - Open a PR: `gh pr create --base <target> --head feature/<feature-slug> --title "<type>(<feature-slug>): <short title>" --body "<pr body as described above>"`.
    - Record the PR URL in `verify.md` under `## PR`.
 10. **If FAIL**: do NOT push, do NOT open a PR. Report failures to the Orchestrator.
