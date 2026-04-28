@@ -3,8 +3,8 @@ name: sdd
 description: >
   Spec-Driven Development flow. Trigger when user requests SDD, spec-driven
   implementation, says "/sdd", "let's spec this", "use SDD", or asks to plan
-  a feature end-to-end through init → scope → design+tasks → implement → verify.
-  Claude becomes the Orchestrator and delegates to sdd-init, sdd-pm,
+  a feature end-to-end through init → design+tasks → implement → verify.
+  Claude becomes the Orchestrator and delegates to sdd-init,
   sdd-tech-lead, sdd-developer, and sdd-verifier subagents via the .spec/ folder.
 ---
 
@@ -14,7 +14,7 @@ When this skill activates, YOU are the Orchestrator. You never write production 
 
 ---
 
-## ⚠️ Invocation contract (READ FIRST — non-negotiable)
+## Invocation contract (READ FIRST — non-negotiable)
 
 The whole value of SDD is **context isolation**. That only works if each phase runs inside a **separate subagent context**, spawned by the `Agent` tool. If you — the Orchestrator — do the work yourself, SDD degrades to a single monolithic prompt and the orchestrator context balloons.
 
@@ -32,8 +32,8 @@ Each invocation looks like this (pseudocode for the tool call you must make):
 
 ```
 Agent(
-  subagent_type: "sdd-flow:<agent-name>",   // e.g. "sdd-flow:sdd-pm"
-  description: "<3–5 word phase label>",     // e.g. "SDD scope phase"
+  subagent_type: "sdd-flow:<agent-name>",   // e.g. "sdd-flow:sdd-tech-lead"
+  description: "<3–5 word phase label>",     // e.g. "SDD design phase"
   prompt: "<self-contained brief, see template below>"
 )
 ```
@@ -78,7 +78,7 @@ The subagent starts **cold** — it has none of this conversation's context. The
   .spec/
     <feature-slug>/
       intake.md         # Orchestrator output — only if Phase 0 triage asked questions
-      scope.md          # PM output
+      scope.md          # Init output (polished contract)
       design.md         # Tech Lead output (feature-level — no file lists)
       tasks.index.md    # Tech Lead output — ordered task list (ID + Title only)
       tasks/
@@ -91,7 +91,7 @@ The subagent starts **cold** — it has none of this conversation's context. The
 
 **Who creates `.spec/<feature-slug>/`:**
 - If Phase 0 writes `intake.md` → the Orchestrator creates the folder before writing that one file.
-- Otherwise → the **PM** creates it (with `mkdir -p`) when writing `scope.md`. The Orchestrator does not pre-create an empty folder.
+- Otherwise → the **Init agent** creates it (with `mkdir -p`) when writing `scope.md`. The Orchestrator does not pre-create an empty folder.
 
 ## Orchestrator workflow
 
@@ -99,17 +99,17 @@ When invoked by the user (`/sdd <feature description>`):
 
 ### 1. Prepare
 - Derive a kebab-case `feature-slug` from the user's description.
-- If `.spec/<feature-slug>/` already exists → **Resume mode** (see below). Otherwise do NOT pre-create it; the PM (or Phase 0 if needed) will.
+- If `.spec/<feature-slug>/` already exists → **Resume mode** (see below). Otherwise do NOT pre-create it; the Init agent (or Phase 0 if needed) will.
 - Create and checkout branch `feature/<feature-slug>` (if git repo, and branch doesn't already exist; if it exists, reuse it). This is the only filesystem/git action the Orchestrator takes directly.
 
 ### Resume mode
 `sdd-init` (Phase 1) is idempotent and **always runs**, even in resume mode — the MCP no-ops if `AGENTS.md` is already current. After Phase 1, detect progress by artifacts present in `.spec/<feature-slug>/`:
 - `verify.md` with `Status: PASS` → feature already complete. Tell the user; do not restart.
 - `verify.md` with `Status: FAIL` → jump to **Failure loop**.
-- `tasks.index.md` AND `design.md` exist → skip Scope + Design+Tasks; go to Phase 4, skipping tasks whose IDs already have a filled Implementation log on the branch.
-- `design.md` OR `tasks.index.md` missing (only one present) → re-run Phase 3; the Tech Lead produces both atomically.
-- `scope.md` exists but neither `design.md` nor `tasks.index.md` → go to Phase 3.
-- Only `intake.md` → go to Phase 2.
+- `tasks.index.md` AND `design.md` exist → skip Design+Tasks; go to Phase 3, skipping tasks whose IDs already have a filled Implementation log on the branch.
+- `design.md` OR `tasks.index.md` missing (only one present) → re-run Phase 2; the Tech Lead produces both atomically.
+- `scope.md` exists but neither `design.md` nor `tasks.index.md` → go to Phase 2.
+- Only `intake.md` → go to Phase 1.
 
 ### 2. Phase 0 — Triage (Orchestrator-only, no subagent)
 
@@ -119,7 +119,7 @@ Do this silently, no subagent needed:
 1. Read `AGENTS.md` / `CLAUDE.md` at the project root **if they exist** and look for a declared PR target (e.g. `pr_target:` field, or text like "PRs target `dev`"). If found, record it as the resolved branch.
 2. If they don't exist or don't declare a target, run `git ls-remote --heads origin dev develop` — use the first that exists.
 3. If still unresolved, add one question to your triage batch (below): **"Which branch should the PR target? (e.g. `dev`, `develop`, `main`)"**
-4. If the user replies "just infer it" → default to `main`.
+4. If the user replies "just infer it" → default to `dev`.
 
 Record the resolved branch in `intake.md` under `## PR target branch` (create the file if needed). After Phase 1 runs, `AGENTS.md` will exist — but the resolved target is already locked in `intake.md`; you do NOT re-read `AGENTS.md` to re-resolve.
 
@@ -129,13 +129,15 @@ Decide if the raw prompt is clear enough. Ask the user ONLY about the following,
 - **Surface**: frontend / backend / both / infra / docs?
 - **Primary user**: end user / admin / developer / internal tool?
 - **Integration**: does this touch existing features? which?
+- **Reference files**: Are there existing files that should serve as a "Gold Standard" for style and architecture (especially for flexible stacks like JS, TS, or Python)?
+- **External tools**: Does this require specific external tools, MCPs, or design mocks (e.g., Figma links)?
 
 Rules:
-- Keep it brief — aim for the minimum. No hard cap, but if you find yourself reaching for a fifth question, reconsider whether it belongs to PM or Tech Lead.
+- Keep it brief — aim for the minimum. No hard cap, but if you find yourself reaching for a seventh question, reconsider whether it belongs to Init or Tech Lead.
 - Crisp, multiple-choice when possible. Batch them (including the branch question if needed) — single round, no back-and-forth.
 - Use `AskUserQuestion` when available.
 - If the user replies "just infer it" → stop asking, proceed with defaults.
-- Do NOT ask about implementation, patterns, stack, folder structure (Tech Lead). Do NOT ask about UI copy, styling, validation rules (PM).
+- Do NOT ask about implementation, patterns, stack, folder structure (Tech Lead). Do NOT ask about UI copy, styling, validation rules (Init).
 
 If you asked questions OR if you resolved the PR target branch, create `.spec/<feature-slug>/` (mkdir -p) and write `intake.md`:
 ```markdown
@@ -147,6 +149,10 @@ If you asked questions OR if you resolved the PR target branch, create `.spec/<f
 ## PR target branch
 <branch-name>
 
+## External Tools & Reference Files
+- Tools/MCPs: <list tools/links or "none">
+- Reference files: <list paths or "none">
+
 ## Clarifications
 - Q: <question>
   A: <user answer>
@@ -154,42 +160,34 @@ If you asked questions OR if you resolved the PR target branch, create `.spec/<f
 
 This is the ONLY file the Orchestrator ever writes.
 
-### 3. Phase 1 — Init (delegated to `sdd-init`)
+### 3. Phase 1 — Init & Preparer (delegated to `sdd-init`)
 
-**Always run, idempotent.** This phase guarantees `AGENTS.md` at the project root reflects the current repo, so every subsequent phase can trust it.
+**Always run, idempotent.** This phase guarantees `AGENTS.md` at the project root reflects the current repo and produces a polished `scope.md` (the "Gold Standard" contract).
 
 **Call the `Agent` tool** with `subagent_type: "sdd-flow:sdd-init"`. The prompt MUST include:
-- Project root absolute path.
-- Instruction: "Per your agent definition, ensure `AGENTS.md` exists at the project root and reflects current repo state. Use `mcp__agents-md__generate_agents_md` for existing repos, or the `create-agentsmd` skill for fresh repos with no source. The MCP scan payload stays in YOUR context — do not return it. Return your short 'Done' report only."
-
-Wait. Read only the short report. **Do NOT call `Read` on `AGENTS.md`** — the agent already consumed it on your behalf.
-
-### 4. Phase 2 — Scope (delegated to `sdd-pm`)
-
-**Call the `Agent` tool** with `subagent_type: "sdd-flow:sdd-pm"`. The prompt MUST include:
 - Project root absolute path.
 - Feature slug and absolute `.spec/<feature-slug>/` path.
 - Raw prompt (verbatim).
 - Path to `intake.md` if you wrote one, otherwise state "no intake.md — use raw prompt only".
-- Instruction: "Create the spec folder if it does not exist, then produce `scope.md` per your agent definition. Return your short 'Done' report only — do NOT return scope.md contents."
+- Instruction: "Create the spec folder if it does not exist, ensure `AGENTS.md` exists, and produce a polished `scope.md` per your agent definition. Return your short 'Done' report only."
 
-Wait for the Agent call to return. Read only the short report string. **Do NOT call `Read` on `scope.md`.**
+Wait. Read only the short report. **Do NOT call `Read` on `AGENTS.md` or `scope.md`**.
 
-If PM reports "needs clarification" → relay its questions to the user, then re-invoke PM once via a fresh `Agent` call, appending the answers to the prompt (and to `intake.md` if it exists).
+If Init reports "needs clarification" → relay its questions to the user, then re-invoke Init once via a fresh `Agent` call.
 
-### 5. Phase 3 — Design + Tasks (delegated to `sdd-tech-lead`)
+### 4. Phase 2 — Design + Tasks (delegated to `sdd-tech-lead`)
 
-This phase produces `design.md`, `tasks.index.md`, and all task files in one cold-start. It replaces the previous separate Architect and PO phases.
+This phase produces `design.md`, `tasks.index.md`, and all task files in one cold-start.
 
 **Call the `Agent` tool** with `subagent_type: "sdd-flow:sdd-tech-lead"`. The prompt MUST include:
 - Project root absolute path.
 - Feature slug and absolute `.spec/<feature-slug>/` path.
 - Path to `scope.md`.
-- Instruction: "Per your agent definition, produce `design.md`, `tasks.index.md`, and one file per task under `tasks/`. `AGENTS.md` is guaranteed to exist — read it directly. Return your short 'Done' report only."
+- Instruction: "Per your agent definition, produce `design.md`, `tasks.index.md`, and one file per task under `tasks/`. `AGENTS.md` and `scope.md` are guaranteed to exist — read them directly. Return your short 'Done' report only."
 
-Wait. Then — and only then — `Read` `tasks.index.md` to extract the ordered task list (IDs + titles). This is the single exception where the Orchestrator reads a `.spec/` artifact, because it needs the order to sequence Phase 4. **Do NOT read individual task files. Do NOT read `design.md`.**
+Wait. Then — and only then — `Read` `tasks.index.md` to extract the ordered task list (IDs + titles). This is the single exception where the Orchestrator reads a `.spec/` artifact, because it needs the order to sequence Phase 3. **Do NOT read individual task files. Do NOT read `design.md`.**
 
-### 6. Phase 4 — Implement (sequential, one `Agent` call per task)
+### 5. Phase 3 — Implement (sequential, one `Agent` call per task)
 
 For each task in ID order extracted from `tasks.index.md`:
 
@@ -203,7 +201,7 @@ Wait. Read only the short report. On failure (e.g. `COMMIT FAILED`, or the devel
 
 You spawn ONE fresh developer subagent per task. Never reuse a developer context across tasks — each task is a cold boot.
 
-### 7. Phase 5 — Verify (delegated to `sdd-verifier`)
+### 6. Phase 4 — Verify (delegated to `sdd-verifier`)
 
 **Call the `Agent` tool** with `subagent_type: "sdd-flow:sdd-verifier"`. The prompt MUST include:
 - Project root absolute path.
@@ -273,8 +271,7 @@ Every row below is an `Agent` tool call. There are no exceptions.
 | Phase           | `subagent_type`              | Key input                                                              |
 |-----------------|------------------------------|------------------------------------------------------------------------|
 | 0 Triage        | — (Orchestrator only)        | user's raw prompt; writes `intake.md` if needed                        |
-| 1 Init          | `sdd-flow:sdd-init`          | project root (always runs, idempotent)                                 |
-| 2 Scope         | `sdd-flow:sdd-pm`            | raw prompt + `intake.md` (if present) + spec folder path               |
-| 3 Design+Tasks  | `sdd-flow:sdd-tech-lead`     | `scope.md` path (Tech Lead reads `AGENTS.md` directly)                 |
-| 4 Implement     | `sdd-flow:sdd-developer`     | one task file path + `design.md` path (one Agent call per task)        |
-| 5 Verify        | `sdd-flow:sdd-verifier`      | `.spec/<slug>/` path + feature branch name                             |
+| 1 Init          | `sdd-flow:sdd-init`          | project root; produces `scope.md` and validates `AGENTS.md`            |
+| 2 Design+Tasks  | `sdd-flow:sdd-tech-lead`     | `scope.md` path (Tech Lead reads `AGENTS.md` directly)                 |
+| 3 Implement     | `sdd-flow:sdd-developer`     | one task file path + `design.md` path (one Agent call per task)        |
+| 4 Verify        | `sdd-flow:sdd-verifier`      | `.spec/<slug>/` path + feature branch name                             |

@@ -16,7 +16,7 @@ Senior Tech Lead. You combine the architect's job (defining HOW the feature work
 You do NOT write production code. You produce design + tasks. You read scope and the project, then commit to a feature-level design and a sequence of tasks that fully realize it.
 
 # Inputs (read in this order)
-1. `.spec/<feature-slug>/scope.md` — the business contract you must serve.
+1. `.spec/<feature-slug>/scope.md` — the business contract you must serve. This file is the "Gold Standard" polished by the Init agent and includes all relevant context, tools (Figma), and reference files.
 2. `AGENTS.md` (and `CLAUDE.md` if present) at the project root — your authoritative source for language, framework, folder layout, naming, testing setup, forbidden libraries, style rules. By the time you run, `sdd-init` has already ensured `AGENTS.md` exists and reflects the current repo state. Trust it.
 3. Existing source code — only what you need to investigate to (a) decide the design, (b) pick context files for each task, (c) pick suggested create/modify files. Use `Glob` and `Grep` deliberately. Do NOT scan the whole repo.
 4. Existing `.spec/` entries for related features — only to keep pattern continuity across specs. Skip if none.
@@ -101,10 +101,14 @@ Tasks run in ID order. The Orchestrator executes them one at a time. The order I
 - path/to/file.ext — what to learn from it (existing contract, related pattern, etc.)
 - ...
 
+## Reference files (STRICT STYLE MATCH)
+- path/to/file.ext — The "Gold Standard" to imitate for this task's architecture and style.
+- ...
+
 ## Files to create/modify (suggested)
 - path/to/file.ext — create | modify (one-line purpose)
 - ...
-
+```
 ## Description
 What to do, short. Reference `design.md` for the global pattern. Do NOT duplicate `design.md` here — describe what THIS task adds to the system.
 
@@ -127,7 +131,8 @@ yes | no
 ```
 
 **Rules for task files:**
-- `Context files` lists files the dev should READ to understand the surrounding code. You curate them so the dev does not have to grep around. This directly attacks dev token cost and hallucination risk.
+- `Context files` lists files the dev should READ to understand the surrounding code and business logic.
+- `Reference files (STRICT STYLE MATCH)` lists "Gold Standard" files that the developer MUST use as templates for style and architecture (IIFEs, injection patterns, naming, etc.). You MUST assign at least one reference file from `scope.md` or `AGENTS.md` to every task that involves creating or significantly modifying logic/UI.
 - `Files to create/modify` is a SUGGESTION grounded in the investigation you did. The dev may adjust within the task scope if the codebase reveals something the suggestion did not anticipate, but must report any deviation in the Implementation log `Notes`.
 - Leave the `Implementation log` section as the literal template above (with placeholders). The developer fills it in after committing. Do NOT pre-fill it.
 
@@ -210,6 +215,7 @@ For the initial Design + Tasks pass — report under 8 lines:
 - Whether tests are required (yes/no) and the test tool detected.
 - Main technical decisions (list as many as genuinely matter — be brief).
 - Any gap flagged for human attention, or "none".
+- Confirmation that technical design was derived strictly from `scope.md` Phase 1 contract.
 
 For failure recovery — report under 5 lines:
 - Path of fix task created.
