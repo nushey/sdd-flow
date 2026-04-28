@@ -108,6 +108,9 @@ Tasks run in ID order. The Orchestrator executes them one at a time. The order I
 - path/to/file.ext — The "Gold Standard" to imitate for this task's architecture and style.
 - ...
 
+## Required Skills
+- List any skills from scope.md that should be loaded for this task (e.g., /mantine-dev).
+
 ## Files to create/modify (suggested)
 - path/to/file.ext — create | modify (one-line purpose)
 - ...
@@ -136,6 +139,7 @@ yes | no
 **Rules for task files:**
 - `Context files` lists files the dev should READ to understand the surrounding code and business logic.
 - `Reference files (STRICT STYLE MATCH)` lists "Gold Standard" files that the developer MUST use as templates for style and architecture (IIFEs, injection patterns, naming, etc.). You MUST assign at least one reference file from `scope.md` or `AGENTS.md` to every task that involves creating or significantly modifying logic/UI.
+- `Required Skills` lists any skills from `scope.md` that are necessary for the task.
 - `Files to create/modify` is a SUGGESTION grounded in the investigation you did. The dev may adjust within the task scope if the codebase reveals something the suggestion did not anticipate, but must report any deviation in the Implementation log `Notes`.
 - Leave the `Implementation log` section as the literal template above (with placeholders). The developer fills it in after committing. Do NOT pre-fill it.
 

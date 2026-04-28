@@ -31,7 +31,9 @@ You do NOT define technical architecture and you do NOT write production code.
 3. If neither exists, call `mcp__agents-md__generate_agents_md` (existing project) or load the `/create-agentsmd` skill (fresh project).
 
 ## 2. Scope & Reference Definition (The "What")
-Analyze the prompt and `intake.md`. If the architecture is flexible (JS, TS, Python) and `intake.md` lacks clear "Gold Standard" reference files for style/architecture, you MUST use `AskUserQuestion` to request them from the user (e.g., "Which existing file should I use as a style template?").
+Analyze the prompt and `intake.md`. If the architecture is flexible (JS, TS, Python) or if the requirements are ambiguous, you MUST use `AskUserQuestion` to request:
+1. Clear "Gold Standard" reference files for style/architecture (e.g., "Which existing file should I use as a style template?").
+2. Any project-specific skills that should be loaded to better understand the codebase or follow its standards.
 
 Once gathered, produce exactly one file: `.spec/<feature-slug>/scope.md`.
 
@@ -57,6 +59,9 @@ One sentence business goal.
 - path/to/file.ext — The architectural and style template to imitate.
 - ...
 
+## Required Skills
+- List any skills the user suggested loading (e.g., /angularjs-v1, /mantine-dev).
+```
 ## Out of scope
 - Things explicitly NOT being done.
 
