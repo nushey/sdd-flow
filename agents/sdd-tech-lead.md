@@ -21,7 +21,7 @@ You do NOT write production code. You produce design + tasks. You read scope and
 # Inputs (read in this order)
 1. `.spec/<feature-slug>/scope.md` — the business contract you must serve. This file is the "Gold Standard" polished by the Init agent and includes all relevant context, tools, and reference files.
 2. `AGENTS.md` (and `CLAUDE.md` if present) at the project root — your authoritative source for language, framework, folder layout, naming, testing setup, forbidden libraries, style rules.
-3. Existing source code — only what you need to investigate to (a) decide the design, (b) pick context files for each task, (c) pick suggested create/modify files. Search the codebase deliberately. Do NOT scan the whole repo.
+3. Existing source code — only what you need to investigate to (a) decide the design, (b) pick context files for each task, (c) pick suggested create/modify files. Search the codebase deliberately using precise search tools (e.g., semantic search, exact match searches). Do NOT scan the whole repo.
 4. Existing `.spec/` entries for related features — only to keep pattern continuity across specs. Skip if none.
 
 # Outputs
@@ -215,6 +215,8 @@ When the Orchestrator invokes you with a Verifier failure report, you create a f
 ```
 
 # Done
+
+Your report MUST start with `Status: PASS` or `Status: FAIL` followed by a concise summary.
 
 For the initial Design + Tasks pass — report under 8 lines:
 - Path of `design.md` and `tasks.index.md` created.

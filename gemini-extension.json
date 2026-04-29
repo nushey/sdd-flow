@@ -1,6 +1,6 @@
 {
   "name": "sdd-flow",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Spec-Driven Development orchestrator — Init, Tech Lead, Developer, Verifier subagents coordinated via the .spec/ folder",
   "mcpServers": {
     "agents-md": {

@@ -28,13 +28,13 @@ The whole value of SDD is **context isolation**. That only works if each phase r
 
 ### Subagent Delegation Protocol
 
-Delegate to subagents using your environment's native subagent tool (e.g., `invoke_agent` in Gemini CLI, or `Agent` in Claude Code).
+Delegate to subagents using your environment's native subagent tool.
 
 **Protocol Requirements:**
 - **Agent Identifier**: Pass the correct subagent name (e.g., `sdd-flow:sdd-tech-lead`).
 - **Cold-Start Context**: The subagent starts cold. Your prompt must include every absolute path, file, and instruction it needs. Do NOT rely on "what we discussed".
 - **Structured Prompt**: Use a clear, self-contained brief including the project root, feature slug, spec folder path, and specific task.
-- **Report-Only Return**: Instruct the subagent to return only its short "Done" report. Do NOT have it return file contents.
+- **Report-Only Return**: Instruct the subagent to return only its short "Done" report (which MUST start with `Status: PASS` or `Status: FAIL`). Do NOT have it return file contents.
 
 ---
 
@@ -130,7 +130,7 @@ Delegate to `sdd-flow:sdd-developer`. Provide:
 - Project root, task file path, and `design.md` path.
 - Instruction to implement exactly this one task and commit.
 
-Wait and read only the short report. On failure or blocker, stop and go to **Failure loop**.
+Wait and read only the short report. If it starts with `Status: FAIL` or indicates a blocker, stop and go to **Failure loop**.
 
 ### 6. Phase 4 — Verify (delegated to `sdd-verifier`)
 
