@@ -1,6 +1,6 @@
 {
   "name": "sdd-flow",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Spec-Driven Development orchestrator for Claude Code — Init, Tech Lead, Developer, Verifier subagents coordinated via the .spec/ folder",
   "author": {
     "name": "Nahuel Zeballos",
