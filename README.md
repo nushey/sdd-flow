@@ -45,6 +45,14 @@ Spec-Driven Development orchestrator for Claude Code. Turns any feature prompt i
 
 ## Install
 
+### Gemini CLI
+Install the extension directly from the repository:
+```bash
+gemini extensions install https://github.com/nushey/sdd-flow
+```
+*(Or point to a local directory: `gemini extensions install ./sdd-flow`)*
+
+### Claude Code
 ```
 /plugin marketplace add nushey/sdd-flow
 /plugin install sdd-flow@sdd-flow
