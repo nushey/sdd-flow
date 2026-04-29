@@ -121,7 +121,7 @@ Do this silently, no subagent needed:
 3. If still unresolved, add one question to your triage batch (below): **"Which branch should the PR target? (e.g. `dev`, `develop`, `main`)"**
 4. If the user replies "just infer it" → default to `dev`.
 
-Record the resolved branch in `intake.md` under `## PR target branch` (create the file if needed). After Phase 1 runs, `AGENTS.md` will exist — but the resolved target is already locked in `intake.md`; you do NOT re-read `AGENTS.md` to re-resolve.
+Record the resolved branch in `intake.md` under `## PR target branch`. After Phase 1 runs, `AGENTS.md` will exist — but the resolved target is already locked in `intake.md`; you do NOT re-read `AGENTS.md` to re-resolve.
 
 **Step B — Scope triage:**
 Decide if the raw prompt is clear enough. Ask the user ONLY about the following, and ONLY if genuinely unclear from the prompt:
@@ -129,17 +129,17 @@ Decide if the raw prompt is clear enough. Ask the user ONLY about the following,
 - **Surface**: frontend / backend / both / infra / docs?
 - **Primary user**: end user / admin / developer / internal tool?
 - **Integration**: does this touch existing features? which?
-- **Reference files**: Are there existing files that should serve as a "Gold Standard" for style and architecture (especially for flexible stacks like JS, TS, or Python)?
-- **External tools**: Does this require specific external tools, MCPs, or design mocks (e.g., Figma links)?
 
 Rules:
-- Keep it brief — aim for the minimum. No hard cap, but if you find yourself reaching for a seventh question, reconsider whether it belongs to Init or Tech Lead.
-- Crisp, multiple-choice when possible. Batch them (including the branch question if needed) — single round, no back-and-forth.
+- Keep it brief — aim for the minimum. No back-and-forth.
 - Use `AskUserQuestion` when available.
 - If the user replies "just infer it" → stop asking, proceed with defaults.
-- Do NOT ask about implementation, patterns, stack, folder structure (Tech Lead). Do NOT ask about UI copy, styling, validation rules (Init).
+- Do NOT ask about implementation, patterns, stack, folder structure (Tech Lead). 
+- Do NOT ask about reference files or external tools (Init).
+- Do NOT ask about UI copy, styling, validation rules (Init).
 
-If you asked questions OR if you resolved the PR target branch, create `.spec/<feature-slug>/` (mkdir -p) and write `intake.md`:
+**Step C — Initialize Spec Artifacts:**
+The Orchestrator ALWAYS creates `.spec/<feature-slug>/` (mkdir -p) and writes `intake.md` as its first persistent act:
 ```markdown
 # Intake: <Feature Name>
 
@@ -149,16 +149,14 @@ If you asked questions OR if you resolved the PR target branch, create `.spec/<f
 ## PR target branch
 <branch-name>
 
-## External Tools & Reference Files
-- Tools/MCPs: <list tools/links or "none">
-- Reference files: <list paths or "none">
-
 ## Clarifications
 - Q: <question>
   A: <user answer>
 ```
 
 This is the ONLY file the Orchestrator ever writes.
+
+---
 
 ### 3. Phase 1 — Init & Preparer (delegated to `sdd-init`)
 
@@ -168,12 +166,14 @@ This is the ONLY file the Orchestrator ever writes.
 - Project root absolute path.
 - Feature slug and absolute `.spec/<feature-slug>/` path.
 - Raw prompt (verbatim).
-- Path to `intake.md` if you wrote one, otherwise state "no intake.md — use raw prompt only".
-- Instruction: "Create the spec folder if it does not exist, ensure `AGENTS.md` exists, and produce a polished `scope.md` per your agent definition. Return your short 'Done' report only."
+- Path to `intake.md` (guaranteed to exist).
+- Instruction: "Ensure `AGENTS.md` exists and produce a polished `scope.md` per your agent definition. You own the gathering of Reference Files and External Tool requirements — ask the user if they were not provided in intake.md. Return your short 'Done' report only."
 
 Wait. Read only the short report. **Do NOT call `Read` on `AGENTS.md` or `scope.md`**.
 
 If Init reports "needs clarification" → relay its questions to the user, then re-invoke Init once via a fresh `Agent` call.
+
+---
 
 ### 4. Phase 2 — Design + Tasks (delegated to `sdd-tech-lead`)
 
@@ -251,11 +251,13 @@ Tasks run sequentially in ID order. The order IS the dependency. There is **no `
 - Write `scope.md`, `design.md`, task files, `verify.md`, or `AGENTS.md`.
 - Bootstrap `AGENTS.md` / `CLAUDE.md` — that is the `sdd-init` agent's job (Phase 1).
 - Run `create-agentsmd` or `mcp__agents-md__generate_agents_md` itself.
-- Read `scope.md`, `design.md`, individual task files, fix files, `verify.md`, or `AGENTS.md`. (Only short subagent reports + `tasks.index.md` for the ID list.)
+- Read `scope.md`, `design.md`, individual task files, fix files, `verify.md`, or `AGENTS.md`. 
+  - *Exception*: Reading `AGENTS.md` / `CLAUDE.md` is permitted ONLY during Phase 0 to resolve the PR target branch.
+  - *Exception*: Reading `tasks.index.md` is permitted ONLY to extract the task ID list for sequencing.
 - Skip the `Agent` tool call for a phase. "Inlining" a subagent's work into the orchestrator context is the one mistake that breaks SDD entirely.
 - Skip a phase. Phase 1 (`sdd-init`) ALWAYS runs. Phase 0 may skip its triage step only if the raw prompt already answers the triage checks AND the PR target is resolved.
 - Rewrite or "refine" the user's prompt before handing it to the PM.
-- Ask triage questions about implementation, patterns, stack, acceptance-criteria details, or UI/UX specifics.
+- Ask triage questions about implementation, patterns, stack, reference files, external tools, acceptance-criteria details, or UI/UX specifics.
 - Push, merge, or open PRs itself — only the Verifier pushes, and only to open a PR.
 - Run more than 3 failure cycles.
 - Introduce abstractions, helpers, or refactors not requested.
