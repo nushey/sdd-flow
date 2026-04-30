@@ -64,11 +64,21 @@ Restart Claude Code. The `sdd` skill, four subagents, and the `agents-md` MCP re
 
 ## Usage
 
+### Full SDD
 ```
 /sdd Add OAuth login with Google
 ```
+Best for big features, complex refactors, and hard changes requiring deep validation and context isolation. Uses subagents.
 
-The Orchestrator then:
+### Mini-SDD
+```
+/mini-sdd Fix the typo in the header and update the styles
+```
+Best for small features, bug fixes, or refactors where the full flow is overkill. Runs entirely in the orchestrator, no subagents.
+
+---
+
+## SDD Workflow (Full)
 
 0. **Triage** — asks clarifying questions about scope, PR target, and **Reference Files** (Gold Standards) if the architecture is flexible (JS/TS).
 1. **Init & Scope** — `sdd-init` ensures `AGENTS.md` exists and writes `scope.md`. This file centralizes business intent, acceptance criteria, and style references.
