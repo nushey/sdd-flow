@@ -84,6 +84,10 @@ When invoked by the user (`/sdd <feature description>`):
 
 ### 2. Phase 0 — Triage (Orchestrator-only, no subagent)
 
+Phase 0 is where the Orchestrator does ALL the user-facing grilling for the entire SDD flow. Subagents cannot ask questions — if you skip grilling here, downstream agents (`sdd-init`, `sdd-tech-lead`) will fall back to assumptions and the Verifier will pay the cost in failure cycles.
+
+The goal of Phase 0 is to produce an `intake.md` rich enough that `sdd-init` becomes a near-mechanical transcriber. Every ambiguity resolved here costs cheap orchestrator tokens; every ambiguity left for later costs an entire failure-loop cycle.
+
 **Step A — Resolve PR target branch:**
 1. Read project rules at the root for a declared PR target.
 2. If unresolved, check for `dev` or `develop` branches on origin.
@@ -91,11 +95,84 @@ When invoked by the user (`/sdd <feature description>`):
 
 Record the resolved branch in `intake.md` under `## PR target branch`.
 
-**Step B — Scope triage:**
-Ask the user ONLY about scope boundary, surface, primary user, or critical integrations if they are genuinely unclear. If the user says "just infer it," proceed with defaults.
+**Step B — Silent research (BEFORE asking anything):**
+1. Read `AGENTS.md` (and `CLAUDE.md` if present).
+2. Search the affected area of the codebase with precise queries.
+3. Identify Reference File candidates (base classes, shared hooks, existing services, prior similar features) — 2–5 with one-line purpose each.
+4. Detect the dominant architecture pattern in the affected module (container/presentational, hexagonal, layered, etc.).
+5. Note reuse opportunities (existing helpers, utils, components the feature should consume rather than recreate).
 
-**Step C — Initialize Spec Artifacts:**
-Create `.spec/<feature-slug>/` and write `intake.md` as the first persistent act.
+Write nothing yet. Hold this for Step C.
+
+**Step C — Structured grilling (one question at a time):**
+
+Conduct a focused interview across three mandatory categories. **Ask one question at a time** with this format:
+
+```
+**Q<n> — <category>:** <the single, specific question>
+
+**Why I'm asking:** <which downstream decision this unblocks>
+**My recommendation:** <your recommended answer with reasoning>
+**Alternatives considered:** <1–2 options ruled out and why>
+```
+
+Recommending an answer is mandatory — it exposes your assumptions and reduces user cognitive load.
+
+**Category 1 — Feature behavior (zero ambiguity):** inputs, outputs, edge cases (empty/error/loading/unauthorized), explicit out-of-scope. Do not leave this category with any dimension unresolved.
+
+**Category 2 — Reference files (no reinvention):** show the user the candidates you found in Step B and ask which is the Gold Standard. If the user names a file you did not find, READ IT before continuing. If the user says "no reference, just build it" — record as risk in intake.
+
+**Category 3 — Architecture fit (respect what exists):** show the detected pattern and ask for confirmation or correction. Never ask "what architecture should we use?" — always anchor in what you observed.
+
+**Closure criteria** (stop only when ALL hold):
+- Feature behavior unambiguous.
+- At least one Reference File named, OR absence recorded as risk.
+- Architecture fit confirmed.
+- No remaining technical decision has two viable paths without a chosen one.
+
+**Hard cap:** 8 questions. **Escape hatch:** if the user says "just infer it" / "anda nomás", stop, dump open questions into `Unverified assumptions`, and proceed.
+
+**Step D — Write rich `intake.md`:**
+
+Create `.spec/<feature-slug>/` and write `intake.md` with this structure:
+
+```markdown
+# Intake: <Feature Name>
+
+## PR target branch
+<resolved branch>
+
+## Raw prompt
+<verbatim user prompt>
+
+## Clarifications (Q&A)
+### Q1 — <category>: <question>
+**Recommended:** <your recommendation>
+**User answered:** <answer>
+
+### Q2 — ...
+
+## Confirmed feature behavior
+- **Inputs:** ...
+- **Outputs:** ...
+- **Edge cases handled:** ...
+- **Out of scope:** ...
+
+## Reference Files (confirmed by user)
+- path/to/file.ext — Gold Standard for <aspect>.
+
+## Architecture constraints (confirmed)
+- <pattern> — confirmed in Q<n>.
+- State lives in <where>, not <where-not>.
+
+## Reuse (do NOT recreate)
+- path/to/util.ext — existing helper to consume.
+
+## Unverified assumptions (RISK)
+- <list, or "none">
+```
+
+`intake.md` is now AUTHORITATIVE for `sdd-init`. Anything not captured here must not appear in `scope.md`.
 
 ---
 
