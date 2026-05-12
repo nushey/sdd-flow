@@ -1,6 +1,8 @@
 # sdd-flow
 
-Spec-Driven Development orchestrator for Claude Code. Turns any feature prompt into a disciplined `init → design+tasks → implement → verify` flow, with four specialized subagents coordinated via a `.spec/<feature-slug>/` folder.
+Spec-Driven Development orchestrator. Turns any feature prompt into a disciplined `init → design+tasks → implement → verify` flow, with specialized subagents coordinated via a `.spec/<feature-slug>/` folder.
+
+Cross-agent by design: ships with both a Claude Code plugin and a Gemini CLI extension, and the skills/agents use harness-neutral wording (e.g. "load the declared skills", "invoke the MCP tool by name") so they also work with Codex CLI or any other agent harness that reads `AGENTS.md`.
 
 - **Sequential tasks** — one developer at a time, one commit per task.
 - **PR-only** — the Verifier opens a pull request on PASS. Never auto-merges.
@@ -74,7 +76,7 @@ Best for big features, complex refactors, and hard changes requiring deep valida
 ```
 /mini-sdd Fix the typo in the header and update the styles
 ```
-Best for small features, bug fixes, or refactors where the full flow is overkill. Runs entirely in the orchestrator, no subagents.
+Best for small features, bug fixes, or refactors where the full flow is overkill. Planner runs in the orchestrator; implementation is delegated to a single `mini-sdd-developer` subagent so the implementation context starts clean and loads the skills/MCPs declared in the plan.
 
 ---
 
