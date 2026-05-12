@@ -2,22 +2,33 @@
 name: mini-sdd-planner
 description: >
   Mini-SDD Planner. Merges Init and Tech Lead roles into a single workflow.
-  Creates a unified plan.md for smaller features or fixes. Orchestrator-only,
-  no subagents. Drives a structured grilling protocol to eliminate
-  feature ambiguity, surface reference files, and lock architecture fit
-  before any plan is written.
+  Creates a unified plan.md for smaller features or fixes. Runs in the
+  Orchestrator; the resulting plan is then handed to the mini-sdd-developer
+  subagent for implementation. Drives a structured grilling protocol to
+  eliminate feature ambiguity, surface reference files, lock architecture
+  fit, and declare a Bootstrap (skills + MCP calls) that the developer
+  loads before coding.
 ---
 
 # Mini-SDD Planner
 
-This skill is for smaller features, refactors, or bug fixes where the full SDD flow is overkill. It merges **Init** (scope/intent) and **Tech Lead** (design/decomposition) into a single Orchestrator pass.
+This skill is for smaller features, refactors, or bug fixes where the full SDD flow is overkill. It merges **Init** (scope/intent) and **Tech Lead** (design/decomposition) into a single Orchestrator pass. The Orchestrator drives this skill; once `plan.md` is approved, the Orchestrator hands it to the `mini-sdd-developer` subagent.
 
-The Planner exists to PREVENT three failure modes:
+The Planner exists to PREVENT four failure modes:
 1. **Hallucinated features** — implementing behavior the user never asked for.
 2. **Reinvented wheels** — rebuilding components, hooks, services, or base classes that already exist.
 3. **Architecture drift** — ignoring patterns the surrounding code already enforces.
+4. **Silent context drift in the Developer** — the implementer skipping declared skills/MCPs because the plan only mentioned them in prose. The `Bootstrap` section (see Phase D) is the machine-readable contract that prevents this.
 
-The grilling protocol below is the mechanism that prevents them. Skipping it is a protocol violation.
+The grilling protocol below is the mechanism that prevents 1–3. The Bootstrap section prevents 4. Skipping either is a protocol violation.
+
+> **Harness-neutral output.** This skill (and the plan it produces) must work
+> across any agent harness: Claude Code, Gemini CLI, Codex CLI, etc. Do NOT
+> write instructions like "use the Skill tool" or "call the Agent tool" —
+> those are harness-specific UI names. Instead, refer to *what* to load
+> ("load the `<name>` skill", "invoke MCP tool `mcp__<server>__<tool>` with
+> these args"). Every harness has its own loader; the plan tells it *what*,
+> not *how*.
 
 ---
 
@@ -123,6 +134,29 @@ One-sentence business goal.
 - [ ] Criterion 1 (observable/testable)
 - [ ] Criterion 2
 
+## Bootstrap (Developer loads this BEFORE writing any code)
+
+> Machine-readable, harness-neutral. Any agent (Claude Code, Gemini CLI, Codex, …)
+> reads this and uses its own loader to honor the contract. No UI-specific names.
+
+### Skills to load
+- `<skill-name>` — one-line reason (which paths/decisions this skill gates).
+- (omit this subsection if no skill applies to the affected paths)
+
+### MCP tools to (re-)invoke before coding
+- Tool: `mcp__<server>__<tool>`
+  Args: `{ "param1": "value", "param2": "value" }`
+  Reason: why re-fetching matters (snapshot from planner may be stale,
+  variable defs not yet retrieved, schema may have changed, …).
+- (omit this subsection if no MCP context is required)
+
+### Post-implementation validations (optional)
+- Tool: `mcp__<server>__<tool>`
+  Args: `{ ... }`
+  Compare against: what aspect of the implementation this validates
+  (visual parity vs Figma, schema diff vs DB, contract vs spec, …).
+- (omit this subsection if not applicable)
+
 ## Confirmed Feature Behavior
 - **Inputs:** ...
 - **Outputs:** ...
@@ -154,9 +188,28 @@ One-sentence business goal.
 ### Inferred from codebase (verified by reading)
 - <thing> — grounded in path/to/file.ext.
 
-### Unverified assumptions (RISK — Implementer must confirm first)
+### Unverified assumptions (RISK — Developer must confirm first)
 - <thing> — why it could not be verified, and what to check before relying on it.
 ```
+
+#### Bootstrap section — completeness rules (HARD)
+
+- If you (the Planner) used ANY MCP tool during Phase A to obtain context
+  the Developer will need (design tokens, screenshots, schemas, external
+  docs, …), you MUST list the same tool + literal args under
+  `### MCP tools to (re-)invoke before coding`. Embedding a snapshot in the
+  plan is NOT a substitute — the Developer re-fetches to detect drift
+  between planner-time and developer-time.
+- If the feature touches paths whose convention is owned by a specialized
+  skill known to the project (declared in `AGENTS.md` or `CLAUDE.md`),
+  list that skill under `### Skills to load`.
+- Arguments MUST be literal JSON the Developer can copy-paste directly into
+  the tool call. No placeholders like `<fileKey>`. If you don't know the
+  value, Phase A is incomplete.
+- If a subsection is genuinely empty (e.g. a pure backend refactor with no
+  MCP context), omit that subsection entirely. Do not pad with empty headers.
+- If ALL THREE subsections would be empty, omit the whole `Bootstrap`
+  section. The Developer treats its absence as "nothing to load".
 
 ---
 
@@ -170,6 +223,8 @@ One-sentence business goal.
 - **No overengineering.** Reuse > create. Edit > add file. Simpler > clever.
 - **Atomic tasks.** Each task is one committable unit, with at least one Reference File.
 - **No claim without grounding.** Every path, library, or pattern in `plan.md` traces back to a file you read or an answer the user gave.
+- **Bootstrap is a contract, not a hint.** Any MCP tool you used in Phase A and any project-specific skill that gates the affected paths MUST appear in the `Bootstrap` section with literal args. The Developer subagent starts with a clean context and relies on this section to know what to load.
+- **Harness-neutral wording.** The plan must read sensibly to any agent harness. Reference tools by full MCP identifier (`mcp__<server>__<tool>`) and skills by name. Never say "use the Skill tool" or "use the Agent tool" — those names exist only in Claude Code.
 
 ## Done
 
@@ -178,3 +233,4 @@ Report to the user:
 - Summary of the technical approach (2 sentences).
 - Number of tasks defined.
 - Number of unverified assumptions flagged (so the user knows the risk surface).
+- Whether the `Bootstrap` section is populated, and with how many skills / MCP calls / post-validations.
