@@ -12,23 +12,17 @@ description: >
 
 # Mini-SDD Planner
 
-This skill is for smaller features, refactors, or bug fixes where the full SDD flow is overkill. It merges **Init** (scope/intent) and **Tech Lead** (design/decomposition) into a single Orchestrator pass. The Orchestrator drives this skill; once `plan.md` is approved, the Orchestrator hands it to the `mini-sdd-developer` subagent.
+For smaller features, refactors, or bug fixes where the full SDD flow is overkill. Merges **Init** (scope/intent) and **Tech Lead** (design/decomposition) into a single Orchestrator pass. Once `plan.md` is approved, the Orchestrator hands it to the `mini-sdd-developer` subagent.
 
-The Planner exists to PREVENT four failure modes:
-1. **Hallucinated features** — implementing behavior the user never asked for.
-2. **Reinvented wheels** — rebuilding components, hooks, services, or base classes that already exist.
-3. **Architecture drift** — ignoring patterns the surrounding code already enforces.
-4. **Silent context drift in the Developer** — the implementer skipping declared skills/MCPs because the plan only mentioned them in prose. The `Bootstrap` section (see Phase D) is the machine-readable contract that prevents this.
+## Core principles (non-negotiable)
 
-The grilling protocol below is the mechanism that prevents 1–3. The Bootstrap section prevents 4. Skipping either is a protocol violation.
+1. **Zero assumptions.** When context is missing, ASK. Never suppose file paths, signatures, or behavior. Every claim must be grounded in a file you read.
+2. **Existing architecture wins.** Detect the dominant pattern in the affected module and propose inside it. Never invent a new pattern when one already lives there.
+3. **Reuse > create.** Edit > add file. Simpler > clever.
 
-> **Harness-neutral output.** This skill (and the plan it produces) must work
-> across any agent harness: Claude Code, Gemini CLI, Codex CLI, etc. Do NOT
-> write instructions like "use the Skill tool" or "call the Agent tool" —
-> those are harness-specific UI names. Instead, refer to *what* to load
-> ("load the `<name>` skill", "invoke MCP tool `mcp__<server>__<tool>` with
-> these args"). Every harness has its own loader; the plan tells it *what*,
-> not *how*.
+The Planner prevents four failure modes: hallucinated features, reinvented wheels, architecture drift, and silent context drift in the Developer. The grilling protocol (Phase B) prevents the first three; the `Bootstrap` section (Phase D) prevents the fourth. Skipping either is a protocol violation.
+
+> **Harness-neutral output.** Refer to *what* to load (`load the <name> skill`, `invoke MCP tool mcp__<server>__<tool>`), never to harness-specific UI names ("the Skill tool", "the Agent tool"). Each harness has its own loader.
 
 ---
 
@@ -41,9 +35,7 @@ The grilling protocol below is the mechanism that prevents 1–3. The Bootstrap 
 
 ### 2. Phase A — Silent Research (do this BEFORE asking anything)
 
-Asking the user questions you could have answered yourself is the fastest way to lose their patience and to bias their answers with your own gaps. Read first.
-
-**You MUST complete this phase before asking the first question.**
+**You MUST complete this phase before asking the first question.** Reading first prevents biased questions and avoids burning user patience on things you could resolve yourself.
 
 1. **Conventions** — Read `AGENTS.md` (and `CLAUDE.md` if present) at the project root. Note language, framework, folder layout, naming, testing setup, forbidden patterns.
 2. **Affected area scan** — Search the codebase for the area touched by the feature. Use precise queries (semantic + exact match). Do NOT scan the whole repo.
@@ -67,7 +59,7 @@ You will conduct a focused interview with the user across **three mandatory cate
 **Alternatives considered:** <1–2 options you ruled out and why>
 ```
 
-Recommending an answer is mandatory. It exposes your assumptions and reduces the cognitive load on the user. A user who only has to validate or correct beats a user who has to invent.
+Recommending an answer is mandatory — validating or correcting is far cheaper for the user than inventing.
 
 #### Category 1 — Feature behavior (zero ambiguity)
 
@@ -77,17 +69,14 @@ Do not leave this category until ALL of these are unambiguous:
 - Edge cases (empty, error, loading, partial, unauthorized)
 - Out of scope (what the user explicitly does NOT want)
 
-If the user's prompt already covers one of these dimensions, do not ask again. If it doesn't, ask — even if the answer feels obvious. Obvious assumptions are how features get hallucinated.
+Skip dimensions the prompt already covers. For the rest, ask — obvious assumptions are how features get hallucinated.
 
 #### Category 2 — Reference files (no reinvention)
 
-Show the user the candidates you found in Phase A and ask which is the Gold Standard:
+Show your Phase A candidates and ask which is the Gold Standard (e.g. *"Found `BaseTable.tsx`, `useFetchList.ts`, `EntityForm.tsx` — which is the Gold Standard? Any I missed?"*).
 
-> "I found `path/to/BaseTable.tsx`, `path/to/useFetchList.ts`, and `path/to/EntityForm.tsx` as candidates that match the shape of this feature. Which should I treat as the Gold Standard to imitate? Is there another file I missed?"
-
-If the user says "there is no reference, just build it" — this becomes an explicit `Unverified assumption` in the plan, flagged as risk. Do not silently proceed without recording it.
-
-If the user names a file you didn't find in Phase A, **read it before continuing** to confirm it exists and you understand its shape.
+- If the user names a file you didn't find in Phase A → **read it before continuing**.
+- If the user says "no reference, just build it" → record as explicit `Unverified assumption` in the plan. Never proceed silently.
 
 #### Category 3 — Architecture fit (respect what exists)
 
@@ -206,25 +195,16 @@ One-sentence business goal.
 - Arguments MUST be literal JSON the Developer can copy-paste directly into
   the tool call. No placeholders like `<fileKey>`. If you don't know the
   value, Phase A is incomplete.
-- If a subsection is genuinely empty (e.g. a pure backend refactor with no
-  MCP context), omit that subsection entirely. Do not pad with empty headers.
-- If ALL THREE subsections would be empty, omit the whole `Bootstrap`
-  section. The Developer treats its absence as "nothing to load".
+- Omit empty subsections entirely (no empty headers). If all three would be empty, omit the whole `Bootstrap` section — the Developer treats its absence as "nothing to load".
 
 ---
 
 ## Rules (HARD)
 
-- **Research before asking.** Phase A is mandatory and runs before the first question.
-- **One question at a time.** No batched lists. No "while we're at it".
-- **Always recommend an answer.** Every question carries your recommended answer and reasoning.
-- **Reference Files are not optional.** Either name one, or record its absence as risk.
-- **Architecture is detected, not invented.** Confirm the existing pattern; never propose a new one for a small feature.
+- **One question at a time, with a recommendation.** No batched lists. Every question carries your recommended answer + reasoning.
 - **No overengineering.** Reuse > create. Edit > add file. Simpler > clever.
-- **Atomic tasks.** Each task is one committable unit, with at least one Reference File.
-- **No claim without grounding.** Every path, library, or pattern in `plan.md` traces back to a file you read or an answer the user gave.
-- **Bootstrap is a contract, not a hint.** Any MCP tool you used in Phase A and any project-specific skill that gates the affected paths MUST appear in the `Bootstrap` section with literal args. The Developer subagent starts with a clean context and relies on this section to know what to load.
-- **Harness-neutral wording.** The plan must read sensibly to any agent harness. Reference tools by full MCP identifier (`mcp__<server>__<tool>`) and skills by name. Never say "use the Skill tool" or "use the Agent tool" — those names exist only in Claude Code.
+- **Atomic tasks.** Each task is one committable unit. Prefer one Reference File per task; if none exists, record the absence under `Unverified assumptions`.
+- **Harness-neutral wording.** Reference tools by full MCP identifier (`mcp__<server>__<tool>`) and skills by name. Never say "use the Skill tool" or "use the Agent tool" — those names exist only in Claude Code.
 
 ## Done
 

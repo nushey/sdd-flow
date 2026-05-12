@@ -16,7 +16,7 @@ When this skill activates, YOU are the Orchestrator. You never write production 
 
 ## Invocation contract (READ FIRST — non-negotiable)
 
-The whole value of SDD is **context isolation**. That only works if each phase runs inside a **separate subagent context**. If you — the Orchestrator — do the work yourself, SDD degrades to a single monolithic prompt and the orchestrator context balloons.
+SDD's value is **context isolation**. Each phase MUST run in a separate subagent context — if the Orchestrator does the work itself, SDD collapses to a monolithic prompt.
 
 **Hard rules for the Orchestrator:**
 
@@ -28,13 +28,11 @@ The whole value of SDD is **context isolation**. That only works if each phase r
 
 ### Subagent Delegation Protocol
 
-Delegate to subagents using your environment's native subagent tool.
-
-**Protocol Requirements:**
-- **Agent Identifier**: Pass the correct subagent name (e.g., `sdd-flow:sdd-tech-lead`).
-- **Cold-Start Context**: The subagent starts cold. Your prompt must include every absolute path, file, and instruction it needs. Do NOT rely on "what we discussed".
-- **Structured Prompt**: Use a clear, self-contained brief including the project root, feature slug, spec folder path, and specific task.
-- **Report-Only Return**: Instruct the subagent to return only its short "Done" report (which MUST start with `Status: PASS` or `Status: FAIL`). Do NOT have it return file contents.
+Delegate via your environment's native subagent tool. Every prompt MUST be self-contained:
+- **Agent Identifier**: full name (e.g., `sdd-flow:sdd-tech-lead`).
+- **Cold-Start Context**: every absolute path, file, and instruction the subagent needs — it starts cold and cannot rely on prior conversation.
+- **Structured Prompt**: project root, feature slug, spec folder path, specific task.
+- **Report-Only Return**: short "Done" report starting with `Status: PASS` or `Status: FAIL`. Never file contents.
 
 ---
 
@@ -84,9 +82,7 @@ When invoked by the user (`/sdd <feature description>`):
 
 ### 2. Phase 0 — Triage (Orchestrator-only, no subagent)
 
-Phase 0 is where the Orchestrator does ALL the user-facing grilling for the entire SDD flow. Subagents cannot ask questions — if you skip grilling here, downstream agents (`sdd-init`, `sdd-tech-lead`) will fall back to assumptions and the Verifier will pay the cost in failure cycles.
-
-The goal of Phase 0 is to produce an `intake.md` rich enough that `sdd-init` becomes a near-mechanical transcriber. Every ambiguity resolved here costs cheap orchestrator tokens; every ambiguity left for later costs an entire failure-loop cycle.
+Phase 0 is where the Orchestrator does ALL user-facing grilling. Subagents cannot ask questions — every ambiguity left here costs a failure-loop cycle. Goal: produce an `intake.md` rich enough that `sdd-init` becomes a near-mechanical transcriber.
 
 **Step A — Resolve PR target branch:**
 1. Read project rules at the root for a declared PR target.
