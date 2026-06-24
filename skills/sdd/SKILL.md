@@ -21,8 +21,8 @@ SDD's value is **context isolation**. Each phase MUST run in a separate subagent
 **Hard rules for the Orchestrator:**
 
 1. **Every subagent phase below MUST be executed by delegating to a subagent.** Writing `scope.md`, `design.md`, task files, or production code yourself is a protocol violation — stop and delegate.
-2. **You MUST NOT read `scope.md`, `design.md`, individual task files, fix files, `verify.md`, or `AGENTS.md`.** You only read the **short report string** each subagent returns, plus `tasks.index.md`.
-3. **You MUST NOT bootstrap `AGENTS.md` yourself.** That is the `sdd-init` agent's job (Phase 1).
+2. **You MUST NOT read `scope.md`, `design.md`, individual task files, fix files, `verify.md`, or `AGENTS.md`.** You only read the **short report string** each subagent returns, plus `tasks.index.md`. **One exception:** during resume, read ONLY the `## Status` line of `verify.md` to route (PASS → complete; FAIL → failure loop). Read no other field of `verify.md`.
+3. **You MUST NOT create or modify `AGENTS.md`.** It is a user-provided precondition. `sdd-init` (Phase 1) checks for it and fails fast if it is missing.
 4. **The ONLY file the Orchestrator ever writes is `intake.md`** — and only when Phase 0 triage actually asked questions. Everything else is written by subagents.
 5. **Self-check after each phase:** "Did I just delegate this to a subagent? If no → I am violating the contract."
 
@@ -49,7 +49,7 @@ Delegate via your environment's native subagent tool. Every prompt MUST be self-
 
 ```
 <project-root>/
-  AGENTS.md           # ensured by sdd-init at the start of every run
+  AGENTS.md           # user-provided; read by every agent
   .spec/
     <feature-slug>/
       intake.md         # Orchestrator output
@@ -70,15 +70,16 @@ When invoked by the user (`/sdd <feature description>`):
 
 ### 1. Prepare
 - Derive a kebab-case `feature-slug` from the user's description.
-- If git repo, create and checkout branch `feature/<feature-slug>`.
+- **Git state check:** if the project is not a git repo, warn the user that SDD commits and the PR gate require git, and proceed with local-only artifacts (the Verify phase will skip push/PR). If it is a git repo with a dirty working tree, ask the user to commit or stash before proceeding. Then create and checkout `feature/<feature-slug>` (if it already exists and is clean, just check it out).
 
 ### Resume mode
-`sdd-init` (Phase 1) is idempotent and **always runs**. After Phase 1, detect progress by artifacts present in `.spec/<feature-slug>/`:
-- `verify.md` with `Status: PASS` → feature already complete.
-- `verify.md` with `Status: FAIL` → jump to **Failure loop**.
-- `tasks.index.md` AND `design.md` exist → skip Design+Tasks; go to Phase 3.
+`sdd-init` (Phase 1) is idempotent and **always runs**. After Phase 1, detect progress by artifacts present in `.spec/<feature-slug>/` (in priority order):
+- `verify.md` `Status: PASS` → feature already complete. Stop.
+- `verify.md` `Status: FAIL` → jump to **Failure loop**.
+- `tasks.index.md` AND `design.md` both exist → skip Design+Tasks; go to Phase 3, **skipping any task whose `Status` is `done`** (resume only `pending` tasks).
 - `scope.md` exists but neither `design.md` nor `tasks.index.md` → go to Phase 2.
 - Only `intake.md` → go to Phase 1.
+- **Any inconsistent state** (e.g. `tasks.index.md` without `design.md`, or `design.md` without `tasks.index.md`) → STOP and ask the user. Do NOT re-run a phase, which could overwrite the design of record.
 
 ### 2. Phase 0 — Triage (Orchestrator-only, no subagent)
 
@@ -170,16 +171,18 @@ Create `.spec/<feature-slug>/` and write `intake.md` with this structure:
 
 `intake.md` is now AUTHORITATIVE for `sdd-init`. Anything not captured here must not appear in `scope.md`.
 
+**Offload the working memory:** the raw research from Step B is now SPENT — it lives in `intake.md`. From here on, treat `intake.md` as the only record of Phase 0. Do not carry the raw search results, candidate lists, or code excerpts forward into later phases; they only dilute attention.
+
 ---
 
 ### 3. Phase 1 — Init & Preparer (delegated to `sdd-init`)
 
-**Always run, idempotent.** Guarantees `AGENTS.md` and produces `scope.md`.
+**Always run, idempotent.** Checks `AGENTS.md` is present and produces `scope.md`.
 
 Delegate to `sdd-flow:sdd-init`. Provide:
 - Project root, feature slug, and spec path.
 - Raw prompt and path to `intake.md`.
-- Instruction to ensure `AGENTS.md` and produce `scope.md`.
+- Instruction to check `AGENTS.md` and produce `scope.md`.
 
 Wait and read only the short report.
 
@@ -216,11 +219,13 @@ Wait and read only the short report.
 
 ## Failure loop
 
-Max 3 cycles total per feature. On each cycle:
+Max 3 cycles total per feature. **Derive the current cycle count from the number of rows in the `## Fixes` section of `tasks.index.md`** (0 rows = not yet started). If the count is already 3, STOP and report to the user that the fix cap was reached. On each cycle:
 
-1. **Delegate to `sdd-flow:sdd-tech-lead`** to create a fix task under `fixes/`.
+1. **Delegate to `sdd-flow:sdd-tech-lead`** to create a fix task under `fixes/`. Pass the Verifier's failure report verbatim (failing acceptance criteria, file/commit mismatches, test failures) and the path to `verify.md`.
 2. **Delegate to `sdd-flow:sdd-developer`** on that fix task.
 3. **Delegate to `sdd-flow:sdd-verifier`** to re-verify.
+
+If the Tech Lead flags the failure as a fundamental design gap, STOP and escalate to the user. Do not run another cycle.
 
 ## Language
 
