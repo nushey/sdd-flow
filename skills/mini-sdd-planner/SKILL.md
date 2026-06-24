@@ -30,8 +30,9 @@ The Planner prevents four failure modes: hallucinated features, reinvented wheel
 
 ### 1. Intake & Setup
 - Derive a `feature-slug` (kebab-case).
-- Create `.spec/<feature-slug>/` directory.
-- If in a git repo, create a feature branch: `feature/<feature-slug>`.
+- **Resume check:** if `.spec/<feature-slug>/plan.md` already exists, do NOT recreate or overwrite it. Skip Phases A–D and hand the existing plan to the Orchestrator — the developer resumes by skipping tasks whose boxes are already checked (those carry a commit hash).
+- Otherwise, create `.spec/<feature-slug>/` directory.
+- If in a git repo, create a feature branch: `feature/<feature-slug>` (if it already exists and is clean, just check it out).
 
 ### 2. Phase A — Silent Research (do this BEFORE asking anything)
 
