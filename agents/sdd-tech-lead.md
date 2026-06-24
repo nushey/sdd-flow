@@ -134,6 +134,7 @@ yes | no
 - Files modified:
   - path/to/file.ext (created | modified)
 - Tests added: <count> (<tool>) | none required
+- Context & Reference files read: <list every file from the task's Context/Reference sections, one per line>
 - Notes: <surprises, follow-ups, or any file touched outside the suggested list with reason>
 ```
 
