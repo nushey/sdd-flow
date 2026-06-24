@@ -29,7 +29,7 @@ That's it. Anything else you need must be derivable from the plan or from files 
    - For each entry under `### Skills to load`: load that skill through whatever skill loader your harness provides.
    - For each entry under `### MCP tools to (re-)invoke before coding`: invoke the named MCP tool with the literal args supplied in the plan. Do NOT skip a re-fetch because the plan already embeds a snapshot — the point is to detect drift.
    - Remember the `### Post-implementation validations` entries for Step 3 below.
-4. **Bootstrap is guidance, not a gate.** Missing/unavailable skills or MCP tools get logged under `Notes` (Step 4) and the run continues. Embedded snapshots are stale by definition — re-fetch every tool listed under `### MCP tools to (re-)invoke before coding`.
+4. **Bootstrap is a gate.** Every declared skill and MCP tool is a hard requirement. If a skill fails to load or an MCP re-fetch errors, STOP and report a blocker — that failure is the exact drift signal Bootstrap exists to catch. Embedded snapshots are stale by definition — re-fetch every tool listed under `### MCP tools to (re-)invoke before coding`.
 5. **Read all Reference Files** listed under `## Technical Design > Reference Files (Gold Standards — confirmed by user)`. These define the style you must match. No exceptions, no skips.
 
 ### 1. Sequential Task Execution
@@ -51,7 +51,8 @@ After the last task:
 
 1. **Run tests** if the project has a test suite that can be invoked from a script (e.g. `npm test`, `dotnet test`, `pytest`). Light pass — failures here are blockers and you fix them with a new commit.
 2. **Check Acceptance Criteria** in `plan.md`. Each box must be visibly satisfied by the implementation. Tick the boxes you can attest to.
-3. **Refine if needed.** Any acceptance criterion that isn't met → fix it with one more commit and re-tick.
+3. **Refine if needed (hard cap: 3 fix attempts).** Any acceptance criterion that isn't met → fix it with one more commit and re-tick. If a criterion still fails after 3 total fix attempts, STOP and report the blocker to the Orchestrator — do not loop further.
+4. **Commit the audit trail.** Stage and commit `plan.md` (now holding checked boxes, per-task commit hashes, and the `## Audit` section) with `docs(<feature-slug>): record execution audit in plan.md`. Stage only `plan.md`.
 
 ### 3. Post-Implementation Validations (if declared)
 
@@ -115,13 +116,13 @@ In under 12 lines:
 
 ## Git hygiene
 - Stage only the specific files each task touched.
-- One commit per task. Final verification fixes get their own commit.
+- One commit per task. Final verification fixes get their own commit. The final `plan.md` audit commit is the one allowed exception to "only task-touched files."
 - **Do NOT push. Do NOT merge.**
 
 ## Harness neutrality
 - Refer to skills by name and MCP tools by full identifier (`mcp__<server>__<tool>`).
 - Never assume a specific UI element (e.g. "the Skill tool button") — your harness exposes a loader; use it through whatever interface it provides.
-- If a declared skill or MCP tool does not exist in your harness, log the gap and continue.
+- If a declared skill or MCP tool genuinely does not exist in your harness, STOP and report it as a blocker. Do NOT silently skip a Bootstrap contract item — the Orchestrator must revise the plan.
 
 ## Blockers & root-cause discipline
 - NEVER drop a requirement. If a step fails or an asset is missing, investigate — do not silently skip.

@@ -1,11 +1,5 @@
 {
   "name": "sdd-flow",
-  "version": "0.5.2",
-  "description": "Spec-Driven Development orchestrator — Init, Tech Lead, Developer, Verifier subagents (full SDD) plus a Mini-SDD planner + developer subagent for smaller tasks. Harness-neutral so it works with Claude Code, Gemini CLI, Codex, and any agent that reads AGENTS.md.",
-  "mcpServers": {
-    "agents-md": {
-      "command": "uvx",
-      "args": ["agents-md-generator"]
-    }
-  }
+  "version": "0.6.0",
+  "description": "Spec-Driven Development orchestrator — Init, Tech Lead, Developer, Verifier subagents (full SDD) plus a Mini-SDD planner + developer subagent for smaller tasks. Harness-neutral so it works with Claude Code, Gemini CLI, Codex, and any agent that reads AGENTS.md."
 }

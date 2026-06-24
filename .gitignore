@@ -1,0 +1,5 @@
+# SDD spec artifacts are local working files, not part of the tool
+.spec/
+
+# Local audit/analysis notes
+AUDIT-REPORT.md
