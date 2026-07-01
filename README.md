@@ -49,6 +49,16 @@ gemini extensions install https://github.com/nushey/sdd-flow
 
 Restart Claude Code. The `sdd` skill and four subagents register automatically.
 
+### Other IDEs (Codex, Cursor, Kilo, Opencode, Windsurf, Antigravity)
+
+sdd-flow is harness-neutral Agent Skills, so it runs in any client that reads
+`.agents/skills/`. Install with one command — full steps in [INSTALL.md](./INSTALL.md):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.sh \
+  | bash -s -- --client <codex|opencode|kilo|cursor|windsurf|antigravity>
+```
+
 ---
 
 ## Usage
