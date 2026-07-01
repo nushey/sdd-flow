@@ -55,8 +55,62 @@ irm https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.ps1 -
 
 1. Your project **must have an `AGENTS.md`** at the root. SDD treats it as law and
    never creates it for you. (Optional companion `CLAUDE.md` is also read if present.)
+   **This is still required per-project even if you install globally** — a global
+   install only skips re-copying skills/agents into every project, it does not
+   supply `AGENTS.md`.
 2. Install the [GitHub CLI](https://cli.github.com/) and run `gh auth login` — the
    Verifier opens pull requests with it.
+
+---
+
+## Project vs. global install
+
+By default the installer targets **one project** — the directory you run it from
+(or `--target <dir>` / `-Target <dir>` to point elsewhere). Add `--global`
+(bash) / `-Global` (PowerShell) instead to install once into the client's
+**user-level directory**, so every project on the machine picks it up without
+re-running the installer.
+
+```bash
+# One project (default: current directory)
+scripts/install.sh --client kilo --target /path/to/project
+
+# Every project on this machine
+scripts/install.sh --client kilo --global
+```
+
+```powershell
+# One project
+scripts\install.ps1 -Client kilo -Target "C:\path\to\project"
+
+# Every project on this machine
+scripts\install.ps1 -Client kilo -Global
+```
+
+`--global` and `--target`/`-Target` are mutually exclusive — `--global` ignores
+`--target` if both are passed.
+
+**Global paths per client** (only where the client actually has a confirmed
+user-level directory — installer skips anything unconfirmed and tells you so
+on the spot, it never guesses a path):
+
+| Client | Skills (global) | Agents (global) |
+|--------|------------------|------------------|
+| Codex | `~/.agents/skills/` | `~/.codex/agents/*.toml` |
+| Opencode | `~/.config/opencode/skills/` | `~/.config/opencode/agents/*.md` |
+| Kilo Code | `~/.kilo/skills/` | `~/.kilo/agent/*.md` |
+| Cursor | *(none confirmed — skipped)* | `~/.cursor/agents/*.md` |
+| Windsurf / Devin Desktop | `~/.codeium/windsurf/skills/` | *(none confirmed — skipped, install per-project instead)* |
+| Antigravity | `~/.gemini/config/skills/` | n/a (no subagent support on this client) |
+
+On Windows, `~` above is `%USERPROFILE%` (PowerShell's `$HOME`).
+
+> **PowerShell note:** `$HOME` in `install.ps1` is PowerShell's built-in
+> automatic variable, not `$env:HOME` — setting `$env:HOME` before running the
+> script has **no effect**. There is no way to sandbox/redirect a `-Global`
+> install on Windows; running it writes to your real user profile immediately.
+> If you want to test without touching your real machine, use `-Target` to a
+> throwaway directory instead of `-Global`.
 
 ---
 
@@ -72,6 +126,9 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
 
 **What lands:** 5 skills in `.agents/skills/` and 5 custom agents in `.codex/agents/`
 (as TOML with `name`, `description`, `developer_instructions`).
+
+**Global (every project on this machine):** `scripts/install.sh --client codex --global`
+(or `-Client codex -Global`) → `~/.agents/skills/` + `~/.codex/agents/`.
 
 **Native alternative (if sdd-flow is published as a Codex marketplace/plugin):**
 
@@ -99,6 +156,9 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
 **What lands:** 5 skills in `.agents/skills/` and 5 subagents in `.opencode/agents/`
 (each with `mode: subagent` injected into its frontmatter).
 
+**Global (every project on this machine):** `scripts/install.sh --client opencode --global`
+(or `-Client opencode -Global`) → `~/.config/opencode/skills/` + `~/.config/opencode/agents/`.
+
 **Invoke:** the agent auto-loads the `sdd` skill; say `/sdd <feature>` for full SDD,
 or `@sdd-developer …` to address a subagent directly. Use `/mini-sdd <change>` for
 small fixes.
@@ -117,6 +177,9 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
 
 **What lands:** 5 skills in `.agents/skills/` and 5 agents in `.kilo/agent/`.
 
+**Global (every project on this machine):** `scripts/install.sh --client kilo --global`
+(or `-Client kilo -Global`) → `~/.kilo/skills/` + `~/.kilo/agent/`.
+
 **Invoke:** use the `sdd` skill; say `/sdd <feature>`. Kilo reads `AGENTS.md` and
 `.kilo/` automatically.
 
@@ -133,6 +196,13 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
 ```
 
 **What lands:** 5 skills in `.agents/skills/` and 5 subagents in `.cursor/agents/`.
+
+**Global (every project on this machine):** `scripts/install.sh --client cursor --global`
+(or `-Client cursor -Global`) → `~/.cursor/agents/` only. Cursor has no confirmed
+global skills directory, so the `sdd`/`mini-sdd` **skills are not installed globally**
+— the installer prints a skip note. `/sdd` won't be discoverable until you also run
+the per-project install (`--target <dir>`, no `--global`) in each project, which
+puts skills in `.agents/skills/` for that project.
 
 **Native alternative:** open **Customize → Rules → Add Rule → Remote Rule (GitHub)**
 and point it at `https://github.com/nushey/sdd-flow`.
@@ -161,6 +231,13 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
   pre-rebrand installs).
 - The 5 skills in `.agents/skills/` (best-effort; the rules file is the source of truth).
 
+**Global (every project on this machine):** `scripts/install.sh --client windsurf --global`
+(or `-Client windsurf -Global`) → `~/.codeium/windsurf/skills/` only. The rules file
+(`.devin/rules/sdd.md` / `.windsurfrules`) has no confirmed global location, so it is
+**not** installed globally — the installer prints a skip note. Install per-project
+(`--target <dir>`, no `--global`) to get the rules file, which is what actually
+drives the orchestrator on this client.
+
 **Invoke:** say `/sdd <feature>` or "use SDD to plan `<feature>`".
 
 **Limitation:** Devin Local does support subagents, but their file format is not
@@ -182,6 +259,10 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
 ```
 
 **What lands:** the 5 skills in `.agents/skills/` (no subagent files).
+
+**Global (every project on this machine):** `scripts/install.sh --client antigravity --global`
+(or `-Client antigravity -Global`) → `~/.gemini/config/skills/`. No subagent files
+either way — Antigravity has no native multi-agent orchestration to install into.
 
 **Invoke:** ask the agent to use the `sdd` skill, or say "use SDD for `<feature>`".
 
@@ -230,18 +311,34 @@ scripts/generate-adapters.sh
 | `gh pr create` fails on permissions | Ensure the branch is pushed and you have repo write access. |
 | Want the newest skills/agents | Re-run the same install command; it refreshes in place. |
 | Wrong project targeted | Add `--target /path/to/project` (bash) or `-Target` (PowerShell). |
+| `skip: global agents/skills — no confirmed ...` printed after `--global` | Expected for Cursor (skills), Windsurf (agents/rules), and previously Kilo before its global agent path was confirmed. Not an error — install the missing piece per-project instead (`--target <dir>`, no `--global`). See the [per-client global paths table](#project-vs-global-install). |
+| `--global` on Windows wrote to the wrong place / can't sandbox it | Expected — PowerShell's `$HOME` automatic variable ignores `$env:HOME` overrides. `-Global` on Windows always targets your real user profile; there's no redirect. Use `-Target <throwaway-dir>` if you just want to test the installer. |
+| Skills/agents installed globally but `/sdd` still not found | Restart the client — global directories are scanned at startup same as project ones. If the client has no confirmed global skills path (Cursor, and rules for Windsurf), a project-level install is required for that piece regardless of `--global`. |
 
 ---
 
 ## Uninstall
 
-Remove the directories the installer created for your client, e.g.:
+**Project install** — remove the directories the installer created in that project:
 
 ```bash
 rm -rf .agents/skills/sdd .agents/skills/mini-sdd .agents/skills/mini-sdd-planner \
        .agents/skills/pr-creation .agents/skills/writing-skill .codex/agents   # Codex
 # Opencode: also .opencode/agents   |  Kilo: .kilo/agent   |  Cursor: .cursor/agents
 # Windsurf: .devin/rules/sdd.md .windsurfrules
+```
+
+**Global install** — remove the user-level directories instead (paths per client,
+`~` = `%USERPROFILE%` on Windows):
+
+```bash
+rm -rf ~/.agents/skills/sdd ~/.agents/skills/mini-sdd ~/.agents/skills/mini-sdd-planner \
+       ~/.agents/skills/pr-creation ~/.agents/skills/writing-skill ~/.codex/agents   # Codex
+# Opencode: ~/.config/opencode/skills, ~/.config/opencode/agents
+# Kilo:     ~/.kilo/skills, ~/.kilo/agent
+# Cursor:   ~/.cursor/agents  (no global skills to remove)
+# Windsurf: ~/.codeium/windsurf/skills  (no global rules file to remove)
+# Antigravity: ~/.gemini/config/skills
 ```
 
 Or simply re-run the installer for a different client after cleaning up.

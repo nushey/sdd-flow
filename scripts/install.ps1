@@ -6,7 +6,7 @@
 #
 # Usage:
 #   scripts\install.ps1 -Client <codex|opencode|kilo|cursor|windsurf|antigravity> `
-#                       [-Target <dir>] [-Source <path|url>]
+#                       [-Target <dir> | -Global] [-Source <path|url>]
 #
 #   # One-liner from anywhere (clones sdd-flow to a cache):
 #   irm https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.ps1 | `
@@ -14,6 +14,9 @@
 #
 #   # Or run from a local clone (auto-detected, no network):
 #   git clone https://github.com/nushey/sdd-flow; sdd-flow\scripts\install.ps1 -Client kilo
+#
+#   # Global (user-level, all-projects) install instead of a project:
+#   sdd-flow\scripts\install.ps1 -Client codex -Global
 
 [CmdletBinding()]
 param(
@@ -22,6 +25,8 @@ param(
     [string]$Client,
 
     [string]$Target = (Get-Location).Path,
+
+    [switch]$Global,
 
     [string]$Source
 )
@@ -135,6 +140,51 @@ function Install-Client($src, $target, $client) {
     }
 }
 
+function Install-ClientGlobal($src, $client) {
+    switch ($client) {
+        'codex' {
+            Copy-Skills $src (Join-Path $HOME '.agents' 'skills')
+            $agentsDir = Join-Path $HOME '.codex' 'agents'; New-Item -ItemType Directory -Force -Path $agentsDir | Out-Null
+            foreach ($f in Get-ChildItem -Path (Join-Path $src 'integrations' 'codex' 'agents') -Filter *.toml -File) {
+                Copy-Item $f.FullName (Join-Path $agentsDir $f.Name)
+                Write-Host "  agent:  ~/.codex/agents/$($f.Name)"
+            }
+        }
+        'opencode' {
+            Copy-Skills $src (Join-Path $HOME '.config' 'opencode' 'skills')
+            $agentsDir = Join-Path $HOME '.config' 'opencode' 'agents'; New-Item -ItemType Directory -Force -Path $agentsDir | Out-Null
+            foreach ($f in Get-ChildItem -Path (Join-Path $src 'agents') -Filter *.md -File) {
+                Emit-OpencodeAgent $f.FullName (Join-Path $agentsDir $f.Name)
+                Write-Host "  agent:  ~/.config/opencode/agents/$($f.Name)"
+            }
+        }
+        'kilo' {
+            Copy-Skills $src (Join-Path $HOME '.kilo' 'skills')
+            $agentsDir = Join-Path $HOME '.kilo' 'agent'; New-Item -ItemType Directory -Force -Path $agentsDir | Out-Null
+            foreach ($f in Get-ChildItem -Path (Join-Path $src 'agents') -Filter *.md -File) {
+                Copy-Item $f.FullName (Join-Path $agentsDir $f.Name)
+                Write-Host "  agent:  ~/.kilo/agent/$($f.Name)"
+            }
+        }
+        'cursor' {
+            Write-Host '  skip:   global skills -- no confirmed user-level skills directory for Cursor.'
+            $agentsDir = Join-Path $HOME '.cursor' 'agents'; New-Item -ItemType Directory -Force -Path $agentsDir | Out-Null
+            foreach ($f in Get-ChildItem -Path (Join-Path $src 'agents') -Filter *.md -File) {
+                Copy-Item $f.FullName (Join-Path $agentsDir $f.Name)
+                Write-Host "  agent:  ~/.cursor/agents/$($f.Name)"
+            }
+        }
+        'windsurf' {
+            Copy-Skills $src (Join-Path $HOME '.codeium' 'windsurf' 'skills')
+            Write-Host '  skip:   global rules -- no confirmed user-level rules directory for Windsurf/Devin Desktop.'
+            Write-Host '          Install rules per-project: scripts\install.ps1 -Client windsurf -Target <dir>'
+        }
+        'antigravity' {
+            Copy-Skills $src (Join-Path $HOME '.gemini' 'config' 'skills')
+        }
+    }
+}
+
 function Invoke-Hint($client) {
     switch ($client) {
         'codex'       { '  - Type /skills or use the agent to load the ''sdd'' skill; run /sdd <feature>.' }
@@ -151,23 +201,45 @@ $src = (Resolve-Path $src).Path
 if (-not (Test-Path (Join-Path $src 'skills')) -or -not (Test-Path (Join-Path $src 'agents'))) {
     throw "source has no skills/ and agents/ ($src)"
 }
-New-Item -ItemType Directory -Force -Path $Target | Out-Null
-$target = (Resolve-Path $Target).Path
 
-Write-Host "Installing sdd-flow for '$Client'"
-Write-Host "  source: $src"
-Write-Host "  target: $target"
+if ($Global) {
+    Write-Host "Installing sdd-flow for '$Client' (global, user-level)"
+    Write-Host "  source: $src"
 
-Install-Client $src $target $Client
+    Install-ClientGlobal $src $Client
 
-Write-Host ''
-Write-Host "Done. sdd-flow is installed for $Client."
-Write-Host ''
-Write-Host 'Before you start:'
-Write-Host '  - Make sure your project has an AGENTS.md at the root (user-provided; SDD never creates it).'
-Write-Host '  - Install the GitHub CLI (gh) and run `gh auth login` — the Verifier opens PRs with it.'
-Write-Host ''
-Write-Host 'Invoke:'
-Invoke-Hint $Client
-Write-Host ''
-Write-Host 'Re-run this command any time to refresh skills/agents.'
+    Write-Host ''
+    Write-Host "Done. sdd-flow is installed for $Client (global -- applies to every project on this machine)."
+    Write-Host ''
+    Write-Host 'Before you start:'
+    Write-Host '  - Every project you use sdd-flow in still needs its own AGENTS.md at the root'
+    Write-Host '    (user-provided; SDD never creates it). Global install only skips re-copying'
+    Write-Host '    skills/agents per project -- it does not skip that precondition.'
+    Write-Host '  - Install the GitHub CLI (gh) and run `gh auth login` — the Verifier opens PRs with it.'
+    Write-Host ''
+    Write-Host 'Invoke:'
+    Invoke-Hint $Client
+    Write-Host ''
+    Write-Host 'Re-run this command any time to refresh skills/agents.'
+} else {
+    New-Item -ItemType Directory -Force -Path $Target | Out-Null
+    $target = (Resolve-Path $Target).Path
+
+    Write-Host "Installing sdd-flow for '$Client'"
+    Write-Host "  source: $src"
+    Write-Host "  target: $target"
+
+    Install-Client $src $target $Client
+
+    Write-Host ''
+    Write-Host "Done. sdd-flow is installed for $Client."
+    Write-Host ''
+    Write-Host 'Before you start:'
+    Write-Host '  - Make sure your project has an AGENTS.md at the root (user-provided; SDD never creates it).'
+    Write-Host '  - Install the GitHub CLI (gh) and run `gh auth login` — the Verifier opens PRs with it.'
+    Write-Host ''
+    Write-Host 'Invoke:'
+    Invoke-Hint $Client
+    Write-Host ''
+    Write-Host 'Re-run this command any time to refresh skills/agents.'
+}
