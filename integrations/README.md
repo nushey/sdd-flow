@@ -6,7 +6,9 @@ Per-client adapter files used by the sdd-flow installer (`scripts/install.sh` /
 sdd-flow ships **Agent Skills** (`skills/*/SKILL.md`) and **subagent prompts**
 (`agents/*.md`) that conform to the open [agentskills.io](https://agentskills.io)
 standard. Most agentic clients read `.agents/skills/<name>/SKILL.md` natively, so
-the skills need no transformation — the installer just copies them. Subagent
+the skills need no transformation — the installer just copies each skill folder
+whole, which is how the `sdd` checker (`skills/sdd/scripts/`) and its contract
+(`skills/sdd/references/`) reach every client. Subagent
 prompts need a per-client shape, handled as follows:
 
 | Client | Skills | Subagents | Source of the adapter |

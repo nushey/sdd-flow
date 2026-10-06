@@ -292,8 +292,8 @@ Before you start:
   - Every project you use sdd-flow in still needs its own AGENTS.md at the root
     (user-provided; SDD never creates it). Global install only skips re-copying
     skills/agents per project — it does not skip that precondition.
-  - Every project must be a git repository. Install the GitHub CLI (gh) and run
-    \`gh auth login\` — the Verifier opens PRs with it.
+  - Every project must be a git repository with at least one commit. SDD's
+    checker needs Python 3.11+ (python3). No remote or GitHub CLI is required.
 
 Invoke:
 $(invoke_hint "$CLIENT")
@@ -315,8 +315,8 @@ Done. sdd-flow is installed for $CLIENT.
 
 Before you start:
   - Make sure your project has an AGENTS.md at the root (user-provided; SDD never creates it).
-  - The project must be a git repository. Install the GitHub CLI (gh) and run
-    \`gh auth login\` — the Verifier opens PRs with it.
+  - The project must be a git repository with at least one commit. SDD's
+    checker needs Python 3.11+ (python3). No remote or GitHub CLI is required.
 
 Invoke:
 $(invoke_hint "$CLIENT")

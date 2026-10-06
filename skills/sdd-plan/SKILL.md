@@ -54,9 +54,9 @@ If a check fails, fix the plan or ask one more question.
 Depth follows the request: a one-file fix fits in a few lines; an epic gets tasks that can each be reviewed on their own. Include only sections with content — no empty headers or ritual confirmations.
 
 - **Objective and scope** — the goal, and what is explicitly out of scope when that is not obvious.
-- **Acceptance** — observable, testable criteria.
+- **Acceptance** — observable, testable criteria, each with a stable ID: `AC-001`, `AC-002`, … (three digits, never renumbered or reused).
 - **Approach** — how it fits the existing architecture, what it reuses, and the reference files to imitate.
-- **Steps** — ordered, each one a reviewable unit with the files it touches.
+- **Steps** — ordered, each one a reviewable unit with the files it touches and the AC IDs it covers. Every AC is covered by at least one step.
 - **Decisions and risks** — decisions taken (and whether the user confirmed them or they were assumed), plus known non-blocking risks. Omit when there are none.
 
 ### Mini-SDD contract
@@ -68,17 +68,18 @@ The `mini-sdd-developer` starts cold and reads only the plan, so a Mini-SDD plan
 
 ## Objective
 ## Acceptance Criteria
-- [ ] <observable criterion>
+- [ ] AC-001: <observable criterion>
 ## Bootstrap
 ## Approach
 ## Tasks
 1. [ ] **<Task title>**: <what to do>
+   - Covers: AC-001
    - Files: path/to/file (modify | create)
    - Reference: path/to/reference.ext
 ## Decisions and Risks
 ```
 
-Each task is one committable unit; the developer checks its box and appends the commit hash. Name a `Reference:` per task when one exists.
+Each task is one committable unit; the developer checks its box and appends the commit hash. Name a `Reference:` per task when one exists. Every task lists the AC IDs it covers; every AC is covered by at least one task, and no task covers an unknown ID. A Mini-SDD plan stays a single `plan.md` — no `scope.md`, `design.md`, or `tasks.index.md`.
 
 `## Bootstrap` tells the developer what to load before coding. Include only the subsections that have entries, and omit the whole section when none do:
 
