@@ -15,8 +15,8 @@ prompts need a per-client shape, handled as follows:
 | Opencode | `.agents/skills/` (copied) | `.opencode/agents/*.md` (+`mode: subagent`) | generated at install from `agents/*.md` |
 | Kilo Code | `.agents/skills/` / `.claude/skills/` (copied) | `.kilo/agent/*.md` | copied verbatim from `agents/*.md` |
 | Cursor | `.agents/skills/` / `.cursor/skills/` (copied) | `.cursor/agents/*.md` | copied verbatim from `agents/*.md` |
-| Antigravity | `.agents/skills/` (copied) | n/a (orchestrator-only) | none |
-| Windsurf / Devin | `.agents/skills/` (copied, best-effort — client-side loading unconfirmed) | rules-driven orchestrator | **`integrations/windsurf/windsurfrules`** |
+| Antigravity | `.agents/skills/` (copied) | none — partial install, flows stop at start | none |
+| Windsurf / Devin | `.agents/skills/` (copied, best-effort — client-side loading unconfirmed) | none — partial install, flows stop at start | **`integrations/windsurf/windsurfrules`** |
 
 ## Why only two committed adapter trees?
 
@@ -30,9 +30,9 @@ what is genuinely bespoke:
   ```bash
   scripts/generate-adapters.sh
   ```
-- **`windsurf/windsurfrules`** — Windsurf/Devin Desktop runs the flow as a
-  rules-driven orchestrator rather than discrete skill-loaded subagents, so the
-  adapter is bespoke prose, not a transform of an agent file.
+- **`windsurf/windsurfrules`** — Windsurf/Devin Desktop gets a rules file instead
+  of role subagents, so the adapter is bespoke prose, not a transform of an agent
+  file. It describes the flow and stops it when the roles are not available.
 
 Opencode / Kilo / Cursor adapters are produced by the installer from
 `agents/*.md` (verbatim copy, or a one-line `mode: subagent` frontmatter

@@ -30,9 +30,13 @@ The Planner prevents four failure modes: hallucinated features, reinvented wheel
 
 ### 1. Intake & Setup
 - Derive a `feature-slug` (kebab-case).
-- **Resume check:** if `.spec/<feature-slug>/plan.md` already exists, do NOT recreate or overwrite it. Skip Phases A–D and hand the existing plan to the Orchestrator — the developer resumes by skipping tasks whose boxes are already checked (those carry a commit hash).
+- **Git precondition:** if the project is not a git repository, STOP before writing anything — the developer commits every task.
+- **Branch check (before the resume check):** the feature branch is `feature/<feature-slug>`. Uncommitted changes under `.spec/<feature-slug>/` are this flow's own progress; any other uncommitted change is foreign. Never stash, reset, or discard anything yourself.
+  - Already on `feature/<feature-slug>` → continue.
+  - On another branch with foreign changes → STOP and ask the user to commit or stash them; switching would carry them onto the feature branch.
+  - On another branch otherwise → check out `feature/<feature-slug>`, creating it if missing. If git refuses, STOP and report its error.
+- **Resume check:** if `.spec/<feature-slug>/plan.md` already exists, do NOT recreate or overwrite it. Skip Phases A–D and hand the existing plan to the Orchestrator — the developer resumes by skipping tasks whose boxes are already checked (those carry a commit hash) and reuses the repair budget recorded in its `## Repair attempts` table.
 - Otherwise, create `.spec/<feature-slug>/` directory.
-- If in a git repo, create a feature branch: `feature/<feature-slug>` (if it already exists and is clean, just check it out).
 
 ### 2. Phase A — Silent Research (do this BEFORE asking anything)
 

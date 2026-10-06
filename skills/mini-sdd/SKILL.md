@@ -23,6 +23,11 @@ The Mini-SDD flow uses exactly **one** subagent (the Developer). The Planner run
 > rather than to any specific UI element. Use whatever delegation /
 > skill-loading mechanism your harness provides.
 
+## Requirements (check before planning)
+
+- The harness can delegate to an isolated subagent AND has the `mini-sdd-developer` role registered (by the name your harness gives it, e.g. `sdd-flow:mini-sdd-developer` for the Claude Code plugin, `mini-sdd-developer` elsewhere). If not, STOP before writing anything and tell the user which requirement is missing — skills-only installs (Antigravity, Windsurf) are partial, see INSTALL.md. Never implement the plan in the Orchestrator instead.
+- The project is a git repository.
+
 ## When to use Mini-SDD
 - The task is expected to take fewer than ~5 tasks.
 - No complex cross-cutting architectural changes.
@@ -48,8 +53,8 @@ The Orchestrator delegates to the `mini-sdd-developer` subagent. The subagent:
 1. Starts with a clean context — receives only the plan path and the project root.
 2. Honors the plan's `Bootstrap` section (loads declared skills, re-invokes declared MCP tools).
 3. Executes ALL tasks in `plan.md` sequentially, committing each with conventional commits.
-4. Runs final verification (tests, acceptance criteria).
-5. Runs any post-implementation validations declared in `Bootstrap`.
+4. Runs final verification (tests, acceptance criteria, post-implementation validations declared in `Bootstrap`), repairing within a budget of 3 attempts per feature that is recorded in `plan.md` and survives new sessions.
+5. Writes the `## Audit` from the final code and commits `plan.md` last.
 6. Returns a structured report to the Orchestrator.
 
 The subagent never pushes. It never merges.
@@ -64,11 +69,12 @@ User: `/mini-sdd <task description>`
 5. **Orchestrator**: Delegates to `mini-sdd-developer` subagent with:
    - `plan.md` path
    - target project root
-6. **Developer (subagent)**: Bootstraps → implements all tasks → verifies → validates → reports.
+6. **Developer (subagent)**: Bootstraps → implements all tasks → verifies, validates, and repairs → commits the audit → reports.
 7. **Orchestrator**: Relays the developer's report to the user. If the user asks for a PR, the Orchestrator uses the `pr-creation` skill to open one (the subagent never pushes).
 
 ## Artifacts
 - `.spec/<slug>/plan.md`: The single source of truth for scope, design, tasks, and bootstrap contract.
+- `## Repair attempts` table appended by the developer when a repair is needed (shared 3-attempt budget).
 - Optional `## Audit` section appended by the developer if post-implementation validations were declared.
 
 ## Why one subagent (and not zero)

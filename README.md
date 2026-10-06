@@ -90,14 +90,16 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
 ```
 
 Windows: `scripts/install.ps1 -Client <client>`. Per-client install locations, native
-alternatives, and limitations (Windsurf/Antigravity have no subagent isolation) →
-**[INSTALL.md](./INSTALL.md)**.
+alternatives, and limitations → **[INSTALL.md](./INSTALL.md)**. Windsurf/Devin Desktop and
+Antigravity installs are **partial**: they receive skills but no role subagents, so `/sdd` and
+`/mini-sdd` stop at the start and say what is missing.
 
 ### Prerequisites (all clients)
 
 - Your project **must have an `AGENTS.md`** at the root. sdd-flow treats it as law and never
   creates or scaffolds it — that is on you.
-- **Git + GitHub CLI (`gh`)**, authenticated (`gh auth login`) — the Verifier opens PRs with it.
+- **Git + GitHub CLI (`gh`)**, authenticated (`gh auth login`) — the project must be a git
+  repository (both flows stop at the start otherwise), and the Verifier opens PRs with `gh`.
 
 ### Setup FAQ
 
@@ -159,13 +161,19 @@ in `plan.md` before writing any code.
 
 ### Failure behavior (both flows)
 
-- Max 3 failure cycles per feature.
-- On failure, the Tech Lead (Full SDD) or the plan (Mini-SDD) produces a **fix task** under
-  `fixes/` — `design.md` stays as-is, the loop doesn't redesign from scratch.
+- **Full SDD:** max 3 fix attempts per feature. On a Verifier failure the Tech Lead produces a
+  **fix task** under `fixes/` — `design.md` stays as-is, the loop doesn't redesign from scratch.
+  A developer blocker (tools, permissions, unclear requirement) stops the run and is reported to
+  you instead; it does not consume a fix.
+- **Mini-SDD:** max 3 repair attempts per feature, shared by tests, acceptance checks, and
+  post-implementation validations and recorded in `plan.md`, so a new session continues the same
+  budget. Mini-SDD has no `fixes/` folder.
 - A fundamental design gap stops the loop and escalates to the user — sdd-flow does not force a
   4th cycle on a broken plan.
-- Nothing is pushed until the Verifier passes. On final failure, fix commits stay on the local
-  feature branch; you decide what to do with them.
+- Nothing is pushed until the Verifier passes. If pushing or opening the PR fails after a PASS,
+  re-running `/sdd <slug>` retries the publication (reusing an existing PR) instead of declaring
+  the feature finished. On final failure, fix commits stay on the local feature branch; you decide
+  what to do with them.
 
 ---
 
