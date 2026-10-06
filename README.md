@@ -37,8 +37,7 @@ plain artifact types that any agent harness can read directly off disk:
 - **Skills** (`skills/<name>/SKILL.md`) — orchestrator + standards, `agentskills.io`-compliant frontmatter.
 - **Subagent prompts** (`agents/<name>.md`) — the five roles, plain markdown with `name`+`description` frontmatter.
 
-`.mcp.json` ships as `{"mcpServers": {}}` — an empty placeholder. There is no process to spawn, no
-`command`/`args`/`env`, nothing running between sessions. The orchestrator, Init, Tech Lead,
+There is no process to spawn and nothing running between sessions. The orchestrator, Init, Tech Lead,
 Developer, and Verifier are **prompt roles**, not tool calls.
 
 ```
@@ -104,7 +103,7 @@ Antigravity installs are **partial**: they receive skills but no role subagents,
 ### Setup FAQ
 
 > **Is sdd-flow an MCP server I need to start or keep running?**
-> No. There is no server, no process, no port. `.mcp.json` is an intentionally empty placeholder.
+> No. There is no server, no process, no port.
 > The skills and subagent prompts are read directly off disk by whatever harness you're using.
 
 > **Where does sdd-flow "register" itself — is there a config/registry file?**
