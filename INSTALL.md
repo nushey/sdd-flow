@@ -28,7 +28,7 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
   | bash -s -- --client <client>
 ```
 
-**Windows (PowerShell)** — save and run:
+**Windows (Windows PowerShell 5.1 or PowerShell 7+)** — save and run:
 
 ```powershell
 irm https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.ps1 -OutFile install.ps1
@@ -48,8 +48,14 @@ irm https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.ps1 -
 | [Opencode](#opencode) | installer | — | `.agents/skills/` | `.opencode/agents/*.md` |
 | [Kilo Code](#kilo-code) | installer | — | `.agents/skills/` | `.kilo/agent/*.md` |
 | [Cursor](#cursor) | installer | Customize → Rules → Remote Rule (GitHub) | `.agents/skills/` | `.cursor/agents/*.md` |
-| [Windsurf / Devin Desktop](#windsurf--devin-desktop) | installer | — | `.agents/skills/` | `.devin/rules/sdd.md` (rules-driven) |
-| [Antigravity](#antigravity) | installer | — | `.agents/skills/` | n/a (orchestrator-only) |
+| [Windsurf / Devin Desktop](#windsurf--devin-desktop) | installer (partial) | — | `.agents/skills/` | none — `.devin/rules/sdd.md` only |
+| [Antigravity](#antigravity) | installer (partial) | — | `.agents/skills/` | none |
+
+**Partial installs:** `/sdd` and `/mini-sdd` require a harness that can delegate to
+isolated subagents with the sdd-flow roles registered. Windsurf/Devin Desktop and
+Antigravity receive skills (and rules) but no role subagents, so both flows stop
+before writing any `.spec/` artifact and tell you what is missing. They do not run
+the phases inline.
 
 ### Before you start (all clients)
 
@@ -58,7 +64,9 @@ irm https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.ps1 -
    **This is still required per-project even if you install globally** — a global
    install only skips re-copying skills/agents into every project, it does not
    supply `AGENTS.md`.
-2. Install the [GitHub CLI](https://cli.github.com/) and run `gh auth login` — the
+2. The project must be a **git repository** — every flow commits on a feature branch
+   and stops at the start otherwise.
+3. Install the [GitHub CLI](https://cli.github.com/) and run `gh auth login` — the
    Verifier opens pull requests with it.
 
 ---
@@ -99,7 +107,7 @@ on the spot, it never guesses a path):
 | Codex | `~/.agents/skills/` | `~/.codex/agents/*.toml` |
 | Opencode | `~/.config/opencode/skills/` | `~/.config/opencode/agents/*.md` |
 | Kilo Code | `~/.kilo/skills/` | `~/.kilo/agent/*.md` |
-| Cursor | *(none confirmed — skipped)* | `~/.cursor/agents/*.md` |
+| Cursor | `~/.cursor/skills/` | `~/.cursor/agents/*.md` |
 | Windsurf / Devin Desktop | `~/.codeium/windsurf/skills/` | *(none confirmed — skipped, install per-project instead)* |
 | Antigravity | `~/.gemini/config/skills/` | n/a (no subagent support on this client) |
 
@@ -198,11 +206,8 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
 **What lands:** 5 skills in `.agents/skills/` and 5 subagents in `.cursor/agents/`.
 
 **Global (every project on this machine):** `scripts/install.sh --client cursor --global`
-(or `-Client cursor -Global`) → `~/.cursor/agents/` only. Cursor has no confirmed
-global skills directory, so the `sdd`/`mini-sdd` **skills are not installed globally**
-— the installer prints a skip note. `/sdd` won't be discoverable until you also run
-the per-project install (`--target <dir>`, no `--global`) in each project, which
-puts skills in `.agents/skills/` for that project.
+(or `-Client cursor -Global`) → `~/.cursor/skills/` + `~/.cursor/agents/`. Cursor reads
+`~/.cursor/skills/` natively; the installer does not enable any optional sync.
 
 **Native alternative:** open **Customize → Rules → Add Rule → Remote Rule (GitHub)**
 and point it at `https://github.com/nushey/sdd-flow`.
@@ -229,29 +234,32 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
 
 - `.devin/rules/sdd.md` (preferred) **and** `.windsurfrules` (legacy fallback for
   pre-rebrand installs).
-- The 5 skills in `.agents/skills/` (best-effort; the rules file is the source of truth).
+- The 5 skills in `.agents/skills/`.
+- **No role subagents.** Devin Local's subagent format is not part of sdd-flow's
+  verified adapters, so the installer ships no `sdd-init` / `sdd-tech-lead` /
+  `sdd-developer` / `sdd-verifier` / `mini-sdd-developer` files for this client.
 
 **Global (every project on this machine):** `scripts/install.sh --client windsurf --global`
 (or `-Client windsurf -Global`) → `~/.codeium/windsurf/skills/` only. The rules file
 (`.devin/rules/sdd.md` / `.windsurfrules`) has no confirmed global location, so it is
 **not** installed globally — the installer prints a skip note. Install per-project
-(`--target <dir>`, no `--global`) to get the rules file, which is what actually
-drives the orchestrator on this client.
+(`--target <dir>`, no `--global`) to get the rules file.
 
 **Invoke:** say `/sdd <feature>` or "use SDD to plan `<feature>`".
 
-**Limitation:** Devin Local does support subagents, but their file format is not
-part of sdd-flow's verified adapters yet. Per-phase context isolation is therefore
-weaker here than on Claude Code / Codex / Opencode / Cursor / Kilo. **Prefer
-`/mini-sdd`** (one delegated subagent) on this client.
+**Limitation (partial install):** both `/sdd` and `/mini-sdd` delegate to role
+subagents that this install does not provide. Unless those roles are available to
+the agent by other means, the flows stop before writing artifacts and report the
+missing requirement — they never fall back to running the phases inline. For the
+full pipeline use Claude Code, Gemini CLI, Codex, Opencode, Cursor, or Kilo Code.
 
 ---
 
 ## Antigravity
 
 Google Antigravity reads Agent Skills from `.agents/skills/` (project) or
-`~/.gemini/config/skills/` (global). It has no native multi-agent orchestration, so
-sdd-flow runs as an **orchestrator-only** flow on this client.
+`~/.gemini/config/skills/` (global). sdd-flow ships no subagent adapter for it, so this
+is a **partial install**: skills only.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.sh \
@@ -262,14 +270,13 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
 
 **Global (every project on this machine):** `scripts/install.sh --client antigravity --global`
 (or `-Client antigravity -Global`) → `~/.gemini/config/skills/`. No subagent files
-either way — Antigravity has no native multi-agent orchestration to install into.
+either way.
 
 **Invoke:** ask the agent to use the `sdd` skill, or say "use SDD for `<feature>`".
 
-**Limitation:** without discrete subagents, the init/design/implement/verify phases
-run inside one agent context rather than isolated subagent threads. Use **Mini-SDD**
-for best results here; full SDD works but trades away the context isolation that is
-SDD's main value.
+**Limitation (partial install):** `/sdd` and `/mini-sdd` require isolated role
+subagents. Without them the flows stop before writing artifacts and report the
+missing requirement; they do not run the phases inline in one context.
 
 ---
 
@@ -289,7 +296,7 @@ adapt to each client's format:
   [`integrations/codex/`](./integrations/codex)).
 - **Opencode** — `.opencode/agents/*.md` with `mode: subagent`.
 - **Kilo / Cursor** — `.md` copied as-is (frontmatter is compatible).
-- **Windsurf/Devin** — a rules file drives the orchestrator.
+- **Windsurf/Devin** — a rules file only; no role subagents (partial install).
 
 The canonical agent prompts live once in [`agents/`](./agents). To regenerate the
 Codex TOML adapters after editing them:
@@ -309,36 +316,44 @@ scripts/generate-adapters.sh
 | `Status: FAIL — AGENTS.md missing` | Add an `AGENTS.md` at your project root; SDD never creates it. |
 | Verifier can't open a PR | Install `gh` and run `gh auth login`. |
 | `gh pr create` fails on permissions | Ensure the branch is pushed and you have repo write access. |
-| Want the newest skills/agents | Re-run the same install command; it refreshes in place. |
+| Want the newest skills/agents | Re-run the same install command. Paths sdd-flow installed (listed in the `.sdd-flow-manifest` next to them) are replaced; identical content is kept. |
+| `error: these paths exist, differ from sdd-flow and were not installed by it` | A file or folder with a pack name already exists and has no installation record (for example your own `writing-skill`, or an install made before the manifest existed). Nothing was copied. Move it away, or re-run with `--force` / `-Force` to replace exactly the listed paths. |
+| `error: the cache at ... was cloned from ..., not ...` | The clone cache belongs to another `--source`. Remove it or set `SDD_FLOW_CACHE` to another directory. |
+| `error: git fetch/checkout/clone failed; nothing was installed` | Fix the network or the local changes in the cache; the installer never resets the cache and copies nothing after a git error. |
 | Wrong project targeted | Add `--target /path/to/project` (bash) or `-Target` (PowerShell). |
-| `skip: global agents/skills — no confirmed ...` printed after `--global` | Expected for Cursor (skills), Windsurf (agents/rules), and previously Kilo before its global agent path was confirmed. Not an error — install the missing piece per-project instead (`--target <dir>`, no `--global`). See the [per-client global paths table](#project-vs-global-install). |
+| `skip: global rules — no confirmed ...` printed after `--global` | Expected for Windsurf. Not an error — install the rules per-project instead (`--target <dir>`, no `--global`). See the [per-client global paths table](#project-vs-global-install). |
 | `--global` on Windows wrote to the wrong place / can't sandbox it | Expected — PowerShell's `$HOME` automatic variable ignores `$env:HOME` overrides. `-Global` on Windows always targets your real user profile; there's no redirect. Use `-Target <throwaway-dir>` if you just want to test the installer. |
-| Skills/agents installed globally but `/sdd` still not found | Restart the client — global directories are scanned at startup same as project ones. If the client has no confirmed global skills path (Cursor, and rules for Windsurf), a project-level install is required for that piece regardless of `--global`. |
+| Skills/agents installed globally but `/sdd` still not found | Restart the client — global directories are scanned at startup same as project ones. Windsurf rules have no confirmed global path, so they need a project-level install regardless of `--global`. |
 
 ---
 
 ## Uninstall
 
-**Project install** — remove the directories the installer created in that project:
+Remove only the pack's own entries — never the shared directories, which may hold
+skills and agents from other sources. Each directory the installer wrote to also
+holds a `.sdd-flow-manifest` listing exactly what it installed there.
+
+**Project install** (run from the project root):
 
 ```bash
-rm -rf .agents/skills/sdd .agents/skills/mini-sdd .agents/skills/mini-sdd-planner \
-       .agents/skills/pr-creation .agents/skills/writing-skill .codex/agents   # Codex
-# Opencode: also .opencode/agents   |  Kilo: .kilo/agent   |  Cursor: .cursor/agents
-# Windsurf: .devin/rules/sdd.md .windsurfrules
+rm -rf .agents/skills/{sdd,mini-sdd,mini-sdd-planner,pr-creation,writing-skill} .agents/skills/.sdd-flow-manifest
+# Codex:    rm -f .codex/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.toml .codex/agents/.sdd-flow-manifest
+# Opencode: rm -f .opencode/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .opencode/agents/.sdd-flow-manifest
+# Kilo:     rm -f .kilo/agent/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .kilo/agent/.sdd-flow-manifest
+# Cursor:   rm -f .cursor/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .cursor/agents/.sdd-flow-manifest
+# Windsurf: rm -f .devin/rules/sdd.md .devin/rules/.sdd-flow-manifest .windsurfrules .sdd-flow-manifest
 ```
 
-**Global install** — remove the user-level directories instead (paths per client,
-`~` = `%USERPROFILE%` on Windows):
+**Global install** — the same names under the user-level directories from the
+[global paths table](#project-vs-global-install) (`~` = `%USERPROFILE%` on Windows):
 
 ```bash
-rm -rf ~/.agents/skills/sdd ~/.agents/skills/mini-sdd ~/.agents/skills/mini-sdd-planner \
-       ~/.agents/skills/pr-creation ~/.agents/skills/writing-skill ~/.codex/agents   # Codex
-# Opencode: ~/.config/opencode/skills, ~/.config/opencode/agents
-# Kilo:     ~/.kilo/skills, ~/.kilo/agent
-# Cursor:   ~/.cursor/agents  (no global skills to remove)
-# Windsurf: ~/.codeium/windsurf/skills  (no global rules file to remove)
-# Antigravity: ~/.gemini/config/skills
+# Skills, per client: ~/.agents/skills (Codex), ~/.config/opencode/skills (Opencode),
+# ~/.kilo/skills (Kilo), ~/.cursor/skills (Cursor), ~/.codeium/windsurf/skills (Windsurf),
+# ~/.gemini/config/skills (Antigravity). Example for Cursor:
+rm -rf ~/.cursor/skills/{sdd,mini-sdd,mini-sdd-planner,pr-creation,writing-skill} ~/.cursor/skills/.sdd-flow-manifest
+rm -f  ~/.cursor/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md ~/.cursor/agents/.sdd-flow-manifest
+# Agents, per client: ~/.codex/agents/*.toml (Codex), ~/.config/opencode/agents (Opencode), ~/.kilo/agent (Kilo).
 ```
 
-Or simply re-run the installer for a different client after cleaning up.
+On Windows, use `Remove-Item` with the same individual paths.
