@@ -52,7 +52,7 @@ For each unchecked task in `## Tasks`, in order:
 After the last task, in this order:
 
 1. **Run tests** if the project has a test suite that can be invoked from a script (e.g. `npm test`, `dotnet test`, `pytest`).
-2. **Check Acceptance Criteria** in `plan.md`. Tick the boxes you can attest to from the implementation.
+2. **Check Acceptance Criteria** in `plan.md`. Tick the boxes you can attest to from the implementation, by their `AC-NNN` IDs. Never edit, renumber, or remove an ID or a task's `Covers`.
 3. **Run post-implementation validations** (only if `Bootstrap` declares them): invoke each MCP tool with the supplied args and compare the result against the criterion stated in the plan.
 4. **Repair failures within scope — one shared budget of 3 attempts per feature.** Failing tests, unmet acceptance criteria, and in-scope validation divergences all draw from the same budget, persisted in `plan.md` so it survives new sessions:
 
@@ -128,7 +128,7 @@ In under 12 lines:
 ## Git hygiene
 - Stage only the specific files each task touched.
 - One commit per task. Final verification fixes get their own commit. The final `plan.md` audit commit is the one allowed exception to "only task-touched files."
-- **Do NOT push. Do NOT merge.**
+- **Do NOT push, open or update pull requests, merge, or modify remotes.**
 
 ## Harness neutrality
 - Refer to skills by name and MCP tools by full identifier (`mcp__<server>__<tool>`).

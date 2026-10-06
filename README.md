@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <code>Agent Skills pack</code> · <a href="https://agentskills.io">agentskills.io</a>-compliant · zero runtime dependency, zero MCP server
+  <code>Agent Skills pack</code> · <a href="https://agentskills.io">agentskills.io</a>-compliant · Python 3.11+ for the local checker · zero MCP server
 </p>
 
 <p align="center">
@@ -47,11 +47,12 @@ Agent (Claude Code · Gemini CLI · Codex · Cursor · Opencode · Kilo · ...)
 sdd skill (Orchestrator) ──delegates──► sdd-init / sdd-tech-lead / sdd-developer / sdd-verifier
     │                                        (cold-context subagents, one phase each)
     ▼
-Workspace:  .spec/<feature-slug>/{scope,design,tasks/,verify}.md   +   git commits   +   PR
+Workspace:  .spec/<feature-slug>/{scope,design,tasks/,verify}.md   +   local git commits
 ```
 
 - **Sequential tasks** — one developer at a time, one commit per task.
-- **PR-only** — the Verifier opens a pull request on PASS. Never auto-merges.
+- **Local closure** — both flows end after local verification. No role pushes, opens PRs, merges, or touches remotes; publishing is your separate step.
+- **Traceable acceptance** — every criterion has a stable `AC-NNN` ID; every task declares which IDs it `Covers`, and `sdd check` validates the relationships deterministically.
 - **Convention-first** — `AGENTS.md` is law; a user-provided precondition, read by every agent, never created or edited by sdd-flow.
 - **Token-friendly** — Orchestrator stays thin, subagents read only what they need, Tech Lead curates per-task context so devs don't grep blindly.
 
@@ -97,8 +98,10 @@ Antigravity installs are **partial**: they receive skills but no role subagents,
 
 - Your project **must have an `AGENTS.md`** at the root. sdd-flow treats it as law and never
   creates or scaffolds it — that is on you.
-- **Git + GitHub CLI (`gh`)**, authenticated (`gh auth login`) — the project must be a git
-  repository (both flows stop at the start otherwise), and the Verifier opens PRs with `gh`.
+- **Git** — the project must be a git repository with at least one commit (both flows stop at
+  the start otherwise). No remote, upstream, or GitHub CLI is needed.
+- **Python 3.11+** (`python3` on macOS/Linux, `python` on Windows) for Full SDD's `sdd check`.
+  Standard library only — nothing to `pip install`.
 
 ### Setup FAQ
 
@@ -130,19 +133,22 @@ Antigravity installs are **partial**: they receive skills but no role subagents,
 Best for big features, complex refactors, and changes that need architectural validation and
 context isolation between phases.
 
-0. **Triage** (Orchestrator) — asks clarifying questions about scope, PR target branch, and
-   Reference Files (Gold Standards) when the architecture is flexible. Writes `intake.md`.
+0. **Triage** (Orchestrator) — asks clarifying questions about scope and Reference Files (Gold
+   Standards) when the architecture is flexible. Writes `intake.md`, including the local base
+   commit the feature is reviewed against.
 1. **Init & Scope** — `sdd-init` verifies `AGENTS.md` is present (precondition, never created),
    confirms Reference Files exist, and refines `intake.md` into `scope.md` — business intent,
-   observable acceptance criteria, style references.
+   observable acceptance criteria with stable `AC-NNN` IDs, style references.
 2. **Design + Tasks** — `sdd-tech-lead` writes `design.md` (feature-level, no file lists),
-   `tasks.index.md`, and one atomic task file per unit of work, each with its own Reference Files
-   for strict style matching.
+   one atomic task file per unit of work (each with the AC IDs it `Covers` and its own Reference
+   Files, at most 5 context and 3 reference files), reviews design and tasks as a whole, and only
+   then writes `tasks.index.md` and runs `sdd check --phase plan`.
 3. **Implement** — `sdd-developer` runs once per task: reads the task + `design.md` + curated
    context only, implements, commits with conventional commits, fills the Implementation log.
    One task = one commit.
 4. **Verify** — `sdd-verifier` cross-checks Implementation logs against actual git history, runs
-   tests, reviews architectural fidelity, and opens a PR via `gh pr create` on PASS. Never merges.
+   tests, reviews the diff from the base commit against each AC, and on PASS commits the spec
+   artifacts locally. Never pushes, opens PRs, or merges.
 
 All artifacts live under `.spec/<feature-slug>/`. Re-running `/sdd <slug>` on an existing slug
 resumes where it left off — nothing restarts from zero.
@@ -169,10 +175,30 @@ in `plan.md` before writing any code.
   budget. Mini-SDD has no `fixes/` folder.
 - A fundamental design gap stops the loop and escalates to the user — sdd-flow does not force a
   4th cycle on a broken plan.
-- Nothing is pushed until the Verifier passes. If pushing or opening the PR fails after a PASS,
-  re-running `/sdd <slug>` retries the publication (reusing an existing PR) instead of declaring
-  the feature finished. On final failure, fix commits stay on the local feature branch; you decide
-  what to do with them.
+- Nothing is ever pushed. If the local closure (committing the spec artifacts) fails after a
+  PASS, re-running `/sdd <slug>` completes it without re-implementing. Code committed after a PASS
+  makes it stale and triggers a new verification. On final failure, fix commits stay on the local
+  feature branch; you decide what to do with them.
+
+### `sdd check`
+
+Full SDD's deterministic validator ships inside the `sdd` skill (`skills/sdd/scripts/`). It reads
+`.spec/<slug>/` and local git only — no writes, no network, no model:
+
+```
+sdd check <feature-slug> [--phase resume|scope|plan|verify]
+```
+
+It checks required files per phase, AC/task/fix IDs, index ↔ file correspondence, statuses,
+coverage, unknown AC references, the 5/3 Context/Reference caps, and that every commit hash is a
+local commit of the feature. Exit `0` = contract holds (`OK <phase>` or `OK resume: <state>`), `1`
+= findings (`CODE path:line: explanation`), `2` = usage, unsupported format, or missing runtime.
+The agents call it by absolute path; to type `sdd check` yourself, add the installed
+`skills/sdd/scripts/` folder to your `PATH` (`sdd` on POSIX, `sdd.cmd` on Windows). It never proves
+an AC is met or that a design is good — that stays with the Tech Lead and the Verifier. Mini-SDD
+and standalone `plan.md` files are not validated (exit `2`). Specs created before AC IDs fail
+with findings and are never migrated automatically. Full grammar:
+[`skills/sdd/references/check-contract.md`](./skills/sdd/references/check-contract.md).
 
 ---
 
@@ -183,12 +209,12 @@ in `plan.md` before writing any code.
 | `sdd` | Skill | `/sdd <feature>` | Orchestrator — triages, writes `.spec/` artifacts, delegates each phase |
 | `mini-sdd` | Skill | `/mini-sdd <change>` | Leaner flow: planning in-orchestrator, one delegated developer subagent |
 | `sdd-plan` | Skill | ask for a plan, or loaded by `mini-sdd` | Proportional implementation plan without writing code; Mini-SDD's planner |
-| `pr-creation` | Skill | loaded by the Verifier | PR body standard — value-oriented, minimal technical noise |
+| `pr-creation` | Skill | only when you ask for a PR | PR body standard — value-oriented, minimal technical noise; not part of either flow |
 | `writing-skill` | Skill | loaded when a plan/task declares it | Standard for structured technical documentation |
 | `sdd-init` | Subagent | delegated, Phase 1 | Verifies `AGENTS.md`, refines `intake.md` → `scope.md` |
 | `sdd-tech-lead` | Subagent | delegated, Phase 2 + failure recovery | Writes `design.md`, `tasks.index.md`, task files; produces fix tasks on failure |
 | `sdd-developer` | Subagent | delegated once per task | Implements exactly one task, commits, fills Implementation log |
-| `sdd-verifier` | Subagent | delegated, Phase 4 | Runs tests, cross-checks logs vs. git, opens PR on PASS |
+| `sdd-verifier` | Subagent | delegated, Phase 4 | Runs tests, cross-checks logs vs. git, commits spec artifacts locally on PASS |
 | `mini-sdd-developer` | Subagent | delegated by Mini-SDD | Cold-context implementer for a Mini-SDD `plan.md`; executes all tasks, commits, reports back |
 
 Full prompt bodies live at `skills/<name>/SKILL.md` and `agents/<name>.md` — read them directly,
@@ -201,7 +227,7 @@ there is no compiled/hidden variant.
 ├── intake.md          # Orchestrator's grilling output (Phase 0)
 ├── scope.md            # sdd-init's refined contract (Phase 1)
 ├── design.md            # sdd-tech-lead's technical design (Phase 2)
-├── tasks.index.md        # ordered task list
+├── tasks.index.md        # ordered task list with Covers and Status
 ├── tasks/<n>-<slug>.md    # one atomic task per file, incl. Implementation log
 ├── fixes/<n>-<slug>.md    # fix tasks emitted on failure recovery
 └── verify.md              # sdd-verifier's PASS/FAIL report (Phase 4)
@@ -229,8 +255,8 @@ files above and writes to `.spec/<feature-slug>/` and git.
 ## FAQ
 
 > **Does sdd-flow talk to any network service?**
-> No. It never calls an API on its own. The only network action in the whole flow is the
-> Verifier's `gh pr create`, which uses your already-authenticated `gh` CLI.
+> No. Neither flow nor `sdd check` uses the network. Installing or updating the pack may download
+> its source; pushing and opening PRs are actions you take yourself, outside the flow.
 
 > **Can I skip a phase, e.g. go straight to Implement?**
 > Not through the intended flow — each phase's subagent expects the prior phase's artifact

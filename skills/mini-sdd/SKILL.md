@@ -62,7 +62,7 @@ The Orchestrator delegates to the `mini-sdd-developer` subagent. The subagent:
 5. Writes the `## Audit` from the final code and commits `plan.md` last.
 6. Returns a structured report to the Orchestrator.
 
-The subagent never pushes. It never merges.
+The flow ends after this local verification. No role pushes, opens or updates pull requests, merges, or modifies remotes. Publishing is a separate action the user takes outside Mini-SDD.
 
 ## Invocation
 User: `/mini-sdd <task description>`
@@ -74,7 +74,7 @@ User: `/mini-sdd <task description>`
    - `plan.md` path
    - target project root
 5. **Developer (subagent)**: Bootstraps → implements all tasks → verifies, validates, and repairs → commits the audit → reports.
-6. **Orchestrator**: Relays the developer's report to the user. If the user asks for a PR, the Orchestrator uses the `pr-creation` skill to open one (the subagent never pushes).
+6. **Orchestrator**: Relays the developer's report to the user. The flow ends here.
 
 ## Artifacts
 - `.spec/<slug>/plan.md`: The single source of truth for scope, design, tasks, and bootstrap contract.

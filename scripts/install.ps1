@@ -250,8 +250,8 @@ try {
         Write-Host '  - Every project you use sdd-flow in still needs its own AGENTS.md at the root'
         Write-Host '    (user-provided; SDD never creates it). Global install only skips re-copying'
         Write-Host '    skills/agents per project -- it does not skip that precondition.'
-        Write-Host '  - Every project must be a git repository. Install the GitHub CLI (gh) and run'
-        Write-Host '    `gh auth login` -- the Verifier opens PRs with it.'
+        Write-Host '  - Every project must be a git repository with at least one commit. SDD''s'
+        Write-Host '    checker needs Python 3.11+ (python). No remote or GitHub CLI is required.'
     } else {
         New-Item -ItemType Directory -Force -Path $Target | Out-Null
         $target = (Resolve-Path $Target).Path
@@ -269,8 +269,8 @@ try {
         Write-Host ''
         Write-Host 'Before you start:'
         Write-Host '  - Make sure your project has an AGENTS.md at the root (user-provided; SDD never creates it).'
-        Write-Host '  - The project must be a git repository. Install the GitHub CLI (gh) and run'
-        Write-Host '    `gh auth login` -- the Verifier opens PRs with it.'
+        Write-Host '  - The project must be a git repository with at least one commit. SDD''s'
+        Write-Host '    checker needs Python 3.11+ (python). No remote or GitHub CLI is required.'
     }
     Write-Host ''
     Write-Host 'Invoke:'

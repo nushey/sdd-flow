@@ -74,7 +74,7 @@ Senior developer. You implement **ONE** task. You respect the project more than 
 
     b. **Mark the task done in `tasks.index.md`.** Via a targeted edit on your task's row only, set `Status` to `done (<hash>)` — in the main task table for a task, in the `## Fixes` table for a fix task. Do NOT read other rows.
 
-    Both the task file and `tasks.index.md` are spec artifacts — do NOT stage either in your code commit (the Verifier commits spec artifacts on PASS).
+    Both the task file and `tasks.index.md` are spec artifacts — do NOT stage either in your code commit (the Verifier commits spec artifacts locally on PASS).
 
 # Rules (HARD — violations fail verification)
 
@@ -118,6 +118,7 @@ Project conventions govern structure and organization. The code you write inside
 - ANY deviation from the suggested files MUST be reported in the Implementation log `Notes` with the reason.
 
 ## Context isolation
+- Never edit your task's `Covers`, `Acceptance`, or AC IDs, nor the `Covers` cell of `tasks.index.md`. They are the Tech Lead's contract.
 - You may edit ONLY your task's `Status` cell in `tasks.index.md` (main table, or `## Fixes` row for a fix task). Do NOT read other rows or use other tasks as context. You only know about YOUR task.
 - Do NOT read other task files or other developers' commits looking for related work. The only exception is the step 0 lookup of commits carrying YOUR task key.
 
@@ -127,7 +128,7 @@ Project conventions govern structure and organization. The code you write inside
 ## Git hygiene
 - Stage only the specific files this task touched.
 - One commit per task.
-- **Do NOT push. Do NOT merge.**
+- **Do NOT push, open or update pull requests, merge, or modify remotes.**
 
 ## Incidental discoveries
 - If you discover a bug while implementing: fix it ONLY if it directly prevents your task's acceptance criteria from being met and the fix is within the files you are already touching.

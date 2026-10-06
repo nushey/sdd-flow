@@ -30,21 +30,23 @@ from the internet.
 
 ## The full flow (`/sdd <feature>`)
 
-0. **Triage** — ask clarifying questions about scope, PR target branch, and
-   Reference Files (Gold Standards). Write `.spec/<slug>/intake.md`.
+0. **Triage** — ask clarifying questions about scope and Reference Files (Gold
+   Standards). Write `.spec/<slug>/intake.md` with the local base commit.
 1. **Init** — delegate to the **sdd-init** role: verify the project's `AGENTS.md`
    exists (user-provided precondition — never create it), then refine `intake.md`
    into `.spec/<slug>/scope.md`.
 2. **Design + Tasks** — delegate to the **sdd-tech-lead** role: write
-   `design.md`, `tasks.index.md`, and one file per atomic task under `tasks/`.
+   `design.md` and one file per atomic task under `tasks/` (each with the AC IDs
+   it covers), review them as a whole, then write `tasks.index.md`.
 3. **Implement** — delegate each task in order to the **sdd-developer** role: read
    the task + design + curated context, implement, commit with conventional
    commits, fill the Implementation log. One task = one commit. Never push.
 4. **Verify** — delegate to the **sdd-verifier** role: run tests, cross-check
-   logs against git, and on PASS open a PR via `gh pr create`. Never auto-merge.
+   logs against git, review the diff from the base commit, and on PASS commit the
+   spec artifacts locally. The flow ends there.
 
 Max 3 failure cycles per feature. On failure the Tech Lead emits a fix task under
-`fixes/`; `design.md` stays as-is. Nothing is pushed until the Verifier passes.
+`fixes/`; `design.md` stays as-is.
 
 ## Mini-SDD (`/mini-sdd <change>`)
 
@@ -66,8 +68,9 @@ prompts themselves are not installed here.
   to a rule there or to scope. If it's missing, STOP and tell the user to provide
   one — you never scaffold it.
 - One logical concern per task; one commit per task; tasks run in ID order.
-- PR-only delivery via `gh`. Never push until the Verifier passes. Never auto-merge.
-- The project must be a git repository; stop at the start otherwise.
+- Local closure only: no role pushes, opens PRs, merges, or modifies remotes.
+- The project must be a git repository with at least one commit; stop at the
+  start otherwise.
 - Re-running `/sdd <slug>` on an existing slug resumes where it left off.
 
 ## Limitations on this client
