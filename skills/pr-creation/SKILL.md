@@ -1,9 +1,11 @@
 ---
 name: pr-creation
 description: >
-  Standard for writing PR descriptions in the SDD Verifier phase.
-  Defines structure and tone: value-oriented, concise, technical detail
-  only when it matters to the reviewer.
+  Standard for writing PR descriptions. Use only when the user explicitly
+  asks to open or describe a pull request; it is not part of SDD or
+  Mini-SDD, which end at local verification. Defines structure and tone:
+  value-oriented, concise, technical detail only when it matters to the
+  reviewer.
 ---
 
 # PR Creation Standard
@@ -33,7 +35,7 @@ description: >
 - **Key changes**: 2–5 bullets. Each bullet describes an outcome or a capability, not an implementation step.
 - Include a technical bullet only when the reviewer needs that context to assess correctness, risk, or future implications. "Added `MemberExtractor.cs`" is never a bullet. "Uses syntax-only parsing — no compilation step, intentionally stateless" is, because it answers a question a reviewer would have.
 - Do not mention task IDs, commit hashes, or spec file paths in the PR body.
-- Do not include a test plan checklist — tests ran in CI and the result is in `verify.md`.
+- Do not include a test plan checklist.
 - Write in the same language the project uses (default: English).
 
 ## Example

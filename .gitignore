@@ -3,3 +3,6 @@
 
 # Local audit/analysis notes
 AUDIT-REPORT.md
+
+# Python bytecode from the checker and its tests
+__pycache__/

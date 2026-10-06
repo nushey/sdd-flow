@@ -64,10 +64,15 @@ the phases inline.
    **This is still required per-project even if you install globally** — a global
    install only skips re-copying skills/agents into every project, it does not
    supply `AGENTS.md`.
-2. The project must be a **git repository** — every flow commits on a feature branch
-   and stops at the start otherwise.
-3. Install the [GitHub CLI](https://cli.github.com/) and run `gh auth login` — the
-   Verifier opens pull requests with it.
+2. The project must be a **git repository with at least one commit** — every flow
+   commits on a feature branch and stops at the start otherwise. No remote,
+   upstream, or GitHub CLI is needed: both flows end after local verification.
+3. Full SDD needs **Python 3.11+** (`python3` on macOS/Linux, `python` on Windows)
+   for its checker. It is standard-library only and ships inside the installed
+   `sdd` skill (`scripts/sdd.py`, with `sdd` and `sdd.cmd` launchers); the agents
+   call it by absolute path. To type `sdd check <slug>` yourself, add that
+   `scripts/` folder to your `PATH` — the installer never edits `PATH` or shell
+   profiles.
 
 ---
 
@@ -314,8 +319,10 @@ scripts/generate-adapters.sh
 | `error: --client is required` | Pass `--client <name>` (one of the six). |
 | Skill not discovered after install | Restart the client so it re-scans skill directories. |
 | `Status: FAIL — AGENTS.md missing` | Add an `AGENTS.md` at your project root; SDD never creates it. |
-| Verifier can't open a PR | Install `gh` and run `gh auth login`. |
-| `gh pr create` fails on permissions | Ensure the branch is pushed and you have repo write access. |
+| `ERROR Python 3.11+ is required` or `python3: not found` | Install Python 3.11+ and make sure `python3` (`python` on Windows) is on `PATH`. SDD stops instead of skipping the checker. |
+| `ERROR unsupported format: plan.md (Full SDD only)` | Expected for Mini-SDD/standalone plans: `sdd check` validates Full SDD specs only. |
+| `sdd check` reports `BAD_ID` / `MISSING_SECTION` on an older spec | Specs created before AC IDs are not migrated automatically. Add `AC-NNN` IDs to `scope.md`, `## Covers` to each task, and the `Covers` column to `tasks.index.md` by hand, keeping task IDs and hashes. |
+| Want to publish the feature | Push and open the PR yourself (optionally with the `pr-creation` skill). Neither flow publishes. |
 | Want the newest skills/agents | Re-run the same install command. Paths sdd-flow installed (listed in the `.sdd-flow-manifest` next to them) are replaced; identical content is kept. Installs from 0.6.1 or earlier keep the replaced `mini-sdd-planner` skill: delete that folder from the skill directory. |
 | `error: these paths exist, differ from sdd-flow and were not installed by it` | A file or folder with a pack name already exists and has no installation record (for example your own `writing-skill`, or an install made before the manifest existed). Nothing was copied. Move it away, or re-run with `--force` / `-Force` to replace exactly the listed paths. |
 | `error: the cache at ... was cloned from ..., not ...` | The clone cache belongs to another `--source`. Remove it or set `SDD_FLOW_CACHE` to another directory. |

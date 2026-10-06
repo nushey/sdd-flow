@@ -20,7 +20,8 @@ You do NOT define technical architecture, technology choices, file structure, or
 
 - Project root absolute path (passed by the Orchestrator).
 - Feature slug and absolute `.spec/<feature-slug>/` path.
-- `.spec/<feature-slug>/intake.md` — **read it FIRST**. It is authoritative and contains: PR target branch, raw prompt, Q&A history, confirmed feature behavior, confirmed Reference Files, architecture constraints, reuse list, unverified assumptions.
+- Checker command (`python3 <abs path>/sdd.py`), referred to below as `<checker>`.
+- `.spec/<feature-slug>/intake.md` — **read it FIRST**. It is authoritative and contains: base commit, raw prompt, Q&A history, confirmed feature behavior, confirmed Reference Files, architecture constraints, reuse list, unverified assumptions.
 - `AGENTS.md` (and `CLAUDE.md` if present) at the project root — for domain terminology and naming conventions used in the scope wording.
 
 # Process
@@ -39,15 +40,16 @@ Record AGENTS.md status (`found` | `missing`) in your final report.
 
 If `.spec/<feature-slug>/scope.md` already exists, this is a resume. Do NOT run Steps 2–4 and do NOT write, reformat, or "refresh" `scope.md` in any way — later phases were built against it, even if `design.md`, tasks, or `verify.md` exist.
 
-1. Check it is non-empty and has a `## Objective` and a non-empty `## Acceptance criteria` section.
-2. Complete → return `Status: PASS — scope.md preserved` with its path.
-3. Incomplete → return `Status: FAIL — scope.md incomplete: <what is missing>` and leave the file untouched. Revising an existing scope is a separate, explicit user operation, not part of this phase.
+1. Run `<checker> check <feature-slug> --phase scope`. It checks the base commit in `intake.md`, the `## Objective`, and the `AC-NNN` IDs of `## Acceptance criteria`.
+2. Exit 0 → return `Status: PASS — scope.md preserved` with its path.
+3. Otherwise → return `Status: FAIL — scope.md incomplete: <checker findings>` and leave the file untouched. Revising an existing scope is a separate, explicit user operation, not part of this phase.
 
 ## Step 2 — Validate intake.md (fail fast if incomplete)
 
 Before refining, verify `intake.md` contains the inputs you need. If something material is missing, STOP and return `Status: FAIL — intake incomplete: <what is missing>`. The Orchestrator must re-grill the user; you must not invent.
 
 Required sections in `intake.md`:
+- `## Base commit` with a full commit hash.
 - `## Confirmed feature behavior` with Inputs, Outputs, Edge cases, Out of scope.
 - `## Reference Files (confirmed by user)` with at least one entry, OR an explicit `Unverified assumptions` entry recording that the user declined to provide one.
 - `## Architecture constraints (confirmed)` with at least one explicit constraint or "none — greenfield module" stated.
@@ -68,6 +70,7 @@ Translate every Input / Output / Edge case from intake into an observable, testa
 - Verifiable from external outputs only — no implementation detail.
 - Every Edge case → at least one criterion (especially error/empty states).
 - Out-of-scope items go to the Out-of-scope section, never here.
+- Each criterion gets a stable ID: `- [ ] AC-001: <criterion>`. Three digits, from `001`, in order of appearance, unique within the scope. An ID never changes and is never reused for a different criterion, even if criteria are later reordered.
 
 ### External Tools & Design Mocks
 Carry links/tools from intake (Figma, Storybook, design specs, external APIs). `none` if absent.
@@ -97,7 +100,7 @@ VERBATIM from intake. `none` if absent. Treated as risk to validate early.
 
 ## Step 4 — Write scope.md
 
-Write `.spec/<feature-slug>/scope.md` using this structure:
+Write `.spec/<feature-slug>/scope.md` using the structure below, then run `<checker> check <feature-slug> --phase scope`. Correct any finding in `scope.md` and run it again; if a finding is in `intake.md`, return `Status: FAIL — intake incomplete: <finding>`. Report PASS only after exit 0.
 
 ```markdown
 # Scope: <Feature Name>
@@ -109,7 +112,8 @@ Write `.spec/<feature-slug>/scope.md` using this structure:
 - As a <role>, I want <action> so that <outcome>.
 
 ## Acceptance criteria
-- [ ] <observable criterion>
+- [ ] AC-001: <observable criterion>
+- [ ] AC-002: <observable criterion>
 
 ## External Tools & Design Mocks
 - Figma: <links or "none">
