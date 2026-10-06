@@ -26,14 +26,14 @@ That's it. Anything else you need must be derivable from the plan or from files 
 ### 0. Bootstrap (HARD — runs before Task 1)
 
 0. **Branch check.** The current branch must be `feature/<feature-slug>` (the slug is the plan's `.spec/<feature-slug>/` folder). If it is not, STOP and report a blocker. Never switch branches, stash, or reset.
-1. **Read `plan.md` in full.** Every section, including `Bootstrap`, `Tasks`, and `Assumptions & Blind Spots`.
+1. **Read `plan.md` in full.** Every section, including `Bootstrap`, `Tasks`, and any decisions and risks it records.
 2. **Read project hard rules**: `AGENTS.md` and `CLAUDE.md` at the target project root. These OVERRIDE everything — your style preferences, your idea of "best practice", everything.
 3. **Honor the `Bootstrap` section** if present:
    - For each entry under `### Skills to load`: load that skill through whatever skill loader your harness provides.
    - For each entry under `### MCP tools to (re-)invoke before coding`: invoke the named MCP tool with the literal args supplied in the plan. Do NOT skip a re-fetch because the plan already embeds a snapshot — the point is to detect drift.
    - Remember the `### Post-implementation validations` entries for Step 2 below.
 4. **Bootstrap is a gate.** Every declared skill and MCP tool is a hard requirement. If a skill fails to load or an MCP re-fetch errors, STOP and report a blocker — that failure is the exact drift signal Bootstrap exists to catch. Embedded snapshots are stale by definition — re-fetch every tool listed under `### MCP tools to (re-)invoke before coding`.
-5. **Read all Reference Files** listed under `## Technical Design > Reference Files (Gold Standards — confirmed by user)`. These define the style you must match. No exceptions, no skips.
+5. **Read all Reference Files** the plan lists — in its reference list and in each task's `Reference:` line. These define the style you must match. No exceptions, no skips.
 
 ### 1. Sequential Task Execution
 

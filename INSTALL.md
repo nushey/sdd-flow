@@ -5,7 +5,7 @@ It is **not** an MCP server — there is no process to spawn, no `command`/`args
 and nothing to register in an `mcpServers` block. sdd-flow ships two things:
 
 - **Skills** (`skills/<name>/SKILL.md`) — the orchestrator (`sdd`, `mini-sdd`) plus
-  standards (`pr-creation`, `writing-skill`, `mini-sdd-planner`).
+  standards (`pr-creation`, `writing-skill`, `sdd-plan`).
 - **Subagent prompts** (`agents/<name>.md`) — the five roles:
   `sdd-init`, `sdd-tech-lead`, `sdd-developer`, `sdd-verifier`, `mini-sdd-developer`.
 
@@ -316,7 +316,7 @@ scripts/generate-adapters.sh
 | `Status: FAIL — AGENTS.md missing` | Add an `AGENTS.md` at your project root; SDD never creates it. |
 | Verifier can't open a PR | Install `gh` and run `gh auth login`. |
 | `gh pr create` fails on permissions | Ensure the branch is pushed and you have repo write access. |
-| Want the newest skills/agents | Re-run the same install command. Paths sdd-flow installed (listed in the `.sdd-flow-manifest` next to them) are replaced; identical content is kept. |
+| Want the newest skills/agents | Re-run the same install command. Paths sdd-flow installed (listed in the `.sdd-flow-manifest` next to them) are replaced; identical content is kept. Installs from 0.6.1 or earlier keep the replaced `mini-sdd-planner` skill: delete that folder from the skill directory. |
 | `error: these paths exist, differ from sdd-flow and were not installed by it` | A file or folder with a pack name already exists and has no installation record (for example your own `writing-skill`, or an install made before the manifest existed). Nothing was copied. Move it away, or re-run with `--force` / `-Force` to replace exactly the listed paths. |
 | `error: the cache at ... was cloned from ..., not ...` | The clone cache belongs to another `--source`. Remove it or set `SDD_FLOW_CACHE` to another directory. |
 | `error: git fetch/checkout/clone failed; nothing was installed` | Fix the network or the local changes in the cache; the installer never resets the cache and copies nothing after a git error. |
@@ -336,7 +336,7 @@ holds a `.sdd-flow-manifest` listing exactly what it installed there.
 **Project install** (run from the project root):
 
 ```bash
-rm -rf .agents/skills/{sdd,mini-sdd,mini-sdd-planner,pr-creation,writing-skill} .agents/skills/.sdd-flow-manifest
+rm -rf .agents/skills/{sdd,mini-sdd,sdd-plan,pr-creation,writing-skill} .agents/skills/.sdd-flow-manifest
 # Codex:    rm -f .codex/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.toml .codex/agents/.sdd-flow-manifest
 # Opencode: rm -f .opencode/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .opencode/agents/.sdd-flow-manifest
 # Kilo:     rm -f .kilo/agent/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .kilo/agent/.sdd-flow-manifest
@@ -351,7 +351,7 @@ rm -rf .agents/skills/{sdd,mini-sdd,mini-sdd-planner,pr-creation,writing-skill} 
 # Skills, per client: ~/.agents/skills (Codex), ~/.config/opencode/skills (Opencode),
 # ~/.kilo/skills (Kilo), ~/.cursor/skills (Cursor), ~/.codeium/windsurf/skills (Windsurf),
 # ~/.gemini/config/skills (Antigravity). Example for Cursor:
-rm -rf ~/.cursor/skills/{sdd,mini-sdd,mini-sdd-planner,pr-creation,writing-skill} ~/.cursor/skills/.sdd-flow-manifest
+rm -rf ~/.cursor/skills/{sdd,mini-sdd,sdd-plan,pr-creation,writing-skill} ~/.cursor/skills/.sdd-flow-manifest
 rm -f  ~/.cursor/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md ~/.cursor/agents/.sdd-flow-manifest
 # Agents, per client: ~/.codex/agents/*.toml (Codex), ~/.config/opencode/agents (Opencode), ~/.kilo/agent (Kilo).
 ```

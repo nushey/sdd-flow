@@ -154,8 +154,8 @@ resumes where it left off — nothing restarts from zero.
 /mini-sdd Fix the typo in the header and update the styles
 ```
 
-Best for small fixes/refactors where the full 5-phase flow is overkill. Planning (`mini-sdd-planner`
-skill) runs directly in the Orchestrator; only implementation is delegated — to a single
+Best for small fixes/refactors where the full 5-phase flow is overkill. Planning (`sdd-plan`
+skill) runs directly in the Orchestrator and waits for your approval; only implementation is delegated — to a single
 `mini-sdd-developer` subagent, cold-started so it loads the Bootstrap (skills + MCP calls) declared
 in `plan.md` before writing any code.
 
@@ -183,7 +183,7 @@ in `plan.md` before writing any code.
 |------|------|------------|---------|
 | `sdd` | Skill | `/sdd <feature>` | Orchestrator — triages, writes `.spec/` artifacts, delegates each phase |
 | `mini-sdd` | Skill | `/mini-sdd <change>` | Leaner flow: planning in-orchestrator, one delegated developer subagent |
-| `mini-sdd-planner` | Skill | loaded by `mini-sdd` | Merges Init + Tech Lead into a single `plan.md` for small changes |
+| `sdd-plan` | Skill | ask for a plan, or loaded by `mini-sdd` | Proportional implementation plan without writing code; Mini-SDD's planner |
 | `pr-creation` | Skill | loaded by the Verifier | PR body standard — value-oriented, minimal technical noise |
 | `writing-skill` | Skill | loaded when a plan/task declares it | Standard for structured technical documentation |
 | `sdd-init` | Subagent | delegated, Phase 1 | Verifies `AGENTS.md`, refines `intake.md` → `scope.md` |
