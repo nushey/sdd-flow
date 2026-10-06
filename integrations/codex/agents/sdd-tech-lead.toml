@@ -24,11 +24,13 @@ You do NOT write production code. You produce design + tasks. You read scope and
 
 # Outputs
 
-You produce three things in one pass, atomically:
+You produce three things in one pass, written in this order:
 
 1. `.spec/<feature-slug>/design.md` — feature-level technical design. NO file list (those live in tasks).
-2. `.spec/<feature-slug>/tasks.index.md` — ordered list of tasks (ID + Title only).
-3. `.spec/<feature-slug>/tasks/NNN-<slug>.md` — one file per task.
+2. `.spec/<feature-slug>/tasks/NNN-<slug>.md` — one file per task.
+3. `.spec/<feature-slug>/tasks.index.md` — ordered list of tasks (ID + Title only), written LAST.
+
+The index is the signal that the plan is complete, so write it only after every task file it lists exists. Before reporting PASS, confirm each index row has exactly one matching `tasks/<ID>-*.md`.
 
 If the orchestrator invokes you for failure recovery, you only produce a fix task under `fixes/` (see "Failure recovery" below).
 
@@ -114,7 +116,7 @@ Tasks run in ID order. The Orchestrator executes them one at a time. The order I
 ## Files to create/modify (suggested)
 - path/to/file.ext — create | modify (one-line purpose)
 - ...
-```
+
 ## Description
 What to do, short. Reference `design.md` for the global pattern. Do NOT duplicate `design.md` here — describe what THIS task adds to the system.
 
@@ -195,11 +197,11 @@ Rule of thumb: a typical mid-sized feature lands in **3–6 tasks**, not 10–15
 
 # Failure recovery
 
-**Input for failure recovery:** the Orchestrator passes the Verifier's failure report verbatim (failing criteria, mismatches, test failures) and the path to `verify.md`. You MAY read `verify.md` for full detail; the report is your starting point. In recovery you produce ONLY the fix task — you do not re-read or re-derive `design.md`.
+**Input for failure recovery:** the Orchestrator passes the path to `verify.md` and, when it has it, the Verifier's failure report verbatim (failing criteria, mismatches, test failures). Recovery always starts from a Verifier FAIL — never from a developer blocker. You MAY read `verify.md` for full detail; read it when no report was passed. In recovery you produce ONLY the fix task — you do not re-read or re-derive `design.md`.
 
 When the Orchestrator invokes you with a Verifier failure report, you create a fix task under `.spec/<feature-slug>/fixes/fix-NNN-<slug>.md` using the same task-file format. Fix tasks:
 - Are NOT appended to the main `tasks.index.md` task table.
-- DO get a row in a clearly delimited `## Fixes` section at the bottom of `tasks.index.md` for traceability.
+- DO get a row in a clearly delimited `## Fixes` section at the bottom of `tasks.index.md` for traceability, with `Status` set to `pending`. Write the fix file first, then add the row.
 - Do NOT trigger a redesign. `design.md` stays as the original design of record. If the failure indicates a fundamental design problem, flag that in your Done report.
 
 **Fix-task discipline (HARD):**
@@ -213,10 +215,12 @@ When the Orchestrator invokes you with a Verifier failure report, you create a f
 ```markdown
 ## Fixes
 
-| Fix ID  | Title            | Triggered by failure in | Files (suggested)    |
-|---------|------------------|-------------------------|----------------------|
-| fix-001 | Patch auth guard | Verifier cycle 1        | src/api/auth.ts      |
+| Fix ID  | Title            | Triggered by failure in | Files (suggested)    | Status  |
+|---------|------------------|-------------------------|----------------------|---------|
+| fix-001 | Patch auth guard | Verifier cycle 1        | src/api/auth.ts      | pending |
 ```
+
+Fix `Status` transitions: `pending` (you create it) → `in-progress` (the Developer starts the attempt) → `done (<hash>)` (the Developer committed) → `passed` | `failed` (the Verifier re-verified). Only `failed` rows count against the 3-attempt budget. Never edit the `Status` of an existing row.
 
 # Done
 

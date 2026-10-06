@@ -35,6 +35,14 @@ You do NOT define technical architecture, technology choices, file structure, or
 
 Record AGENTS.md status (`found` | `missing`) in your final report.
 
+## Step 1b — Existing scope.md: validate, never rewrite
+
+If `.spec/<feature-slug>/scope.md` already exists, this is a resume. Do NOT run Steps 2–4 and do NOT write, reformat, or "refresh" `scope.md` in any way — later phases were built against it, even if `design.md`, tasks, or `verify.md` exist.
+
+1. Check it is non-empty and has a `## Objective` and a non-empty `## Acceptance criteria` section.
+2. Complete → return `Status: PASS — scope.md preserved` with its path.
+3. Incomplete → return `Status: FAIL — scope.md incomplete: <what is missing>` and leave the file untouched. Revising an existing scope is a separate, explicit user operation, not part of this phase.
+
 ## Step 2 — Validate intake.md (fail fast if incomplete)
 
 Before refining, verify `intake.md` contains the inputs you need. If something material is missing, STOP and return `Status: FAIL — intake incomplete: <what is missing>`. The Orchestrator must re-grill the user; you must not invent.
@@ -141,7 +149,7 @@ Your report MUST start with `Status: PASS` or `Status: FAIL`.
 
 On PASS — under 6 lines:
 - AGENTS.md status: `found` | `missing` (FAIL).
-- Path of `scope.md` created.
+- Path of `scope.md` and whether it was `created` or `preserved` (a preserved scope reports only its path).
 - Number of user stories and acceptance criteria.
 - Number of Reference Files carried from intake.
 - Number of unverified assumptions flagged.

@@ -90,14 +90,16 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
 ```
 
 Windows: `scripts/install.ps1 -Client <client>`. Per-client install locations, native
-alternatives, and limitations (Windsurf/Antigravity have no subagent isolation) →
-**[INSTALL.md](./INSTALL.md)**.
+alternatives, and limitations → **[INSTALL.md](./INSTALL.md)**. Windsurf/Devin Desktop and
+Antigravity installs are **partial**: they receive skills but no role subagents, so `/sdd` and
+`/mini-sdd` stop at the start and say what is missing.
 
 ### Prerequisites (all clients)
 
 - Your project **must have an `AGENTS.md`** at the root. sdd-flow treats it as law and never
   creates or scaffolds it — that is on you.
-- **Git + GitHub CLI (`gh`)**, authenticated (`gh auth login`) — the Verifier opens PRs with it.
+- **Git + GitHub CLI (`gh`)**, authenticated (`gh auth login`) — the project must be a git
+  repository (both flows stop at the start otherwise), and the Verifier opens PRs with `gh`.
 
 ### Setup FAQ
 
@@ -152,20 +154,26 @@ resumes where it left off — nothing restarts from zero.
 /mini-sdd Fix the typo in the header and update the styles
 ```
 
-Best for small fixes/refactors where the full 5-phase flow is overkill. Planning (`mini-sdd-planner`
-skill) runs directly in the Orchestrator; only implementation is delegated — to a single
+Best for small fixes/refactors where the full 5-phase flow is overkill. Planning (`sdd-plan`
+skill) runs directly in the Orchestrator and waits for your approval; only implementation is delegated — to a single
 `mini-sdd-developer` subagent, cold-started so it loads the Bootstrap (skills + MCP calls) declared
 in `plan.md` before writing any code.
 
 ### Failure behavior (both flows)
 
-- Max 3 failure cycles per feature.
-- On failure, the Tech Lead (Full SDD) or the plan (Mini-SDD) produces a **fix task** under
-  `fixes/` — `design.md` stays as-is, the loop doesn't redesign from scratch.
+- **Full SDD:** max 3 fix attempts per feature. On a Verifier failure the Tech Lead produces a
+  **fix task** under `fixes/` — `design.md` stays as-is, the loop doesn't redesign from scratch.
+  A developer blocker (tools, permissions, unclear requirement) stops the run and is reported to
+  you instead; it does not consume a fix.
+- **Mini-SDD:** max 3 repair attempts per feature, shared by tests, acceptance checks, and
+  post-implementation validations and recorded in `plan.md`, so a new session continues the same
+  budget. Mini-SDD has no `fixes/` folder.
 - A fundamental design gap stops the loop and escalates to the user — sdd-flow does not force a
   4th cycle on a broken plan.
-- Nothing is pushed until the Verifier passes. On final failure, fix commits stay on the local
-  feature branch; you decide what to do with them.
+- Nothing is pushed until the Verifier passes. If pushing or opening the PR fails after a PASS,
+  re-running `/sdd <slug>` retries the publication (reusing an existing PR) instead of declaring
+  the feature finished. On final failure, fix commits stay on the local feature branch; you decide
+  what to do with them.
 
 ---
 
@@ -175,7 +183,7 @@ in `plan.md` before writing any code.
 |------|------|------------|---------|
 | `sdd` | Skill | `/sdd <feature>` | Orchestrator — triages, writes `.spec/` artifacts, delegates each phase |
 | `mini-sdd` | Skill | `/mini-sdd <change>` | Leaner flow: planning in-orchestrator, one delegated developer subagent |
-| `mini-sdd-planner` | Skill | loaded by `mini-sdd` | Merges Init + Tech Lead into a single `plan.md` for small changes |
+| `sdd-plan` | Skill | ask for a plan, or loaded by `mini-sdd` | Proportional implementation plan without writing code; Mini-SDD's planner |
 | `pr-creation` | Skill | loaded by the Verifier | PR body standard — value-oriented, minimal technical noise |
 | `writing-skill` | Skill | loaded when a plan/task declares it | Standard for structured technical documentation |
 | `sdd-init` | Subagent | delegated, Phase 1 | Verifies `AGENTS.md`, refines `intake.md` → `scope.md` |
