@@ -5,8 +5,8 @@
 > pre-rebrand Windsurf, also at `.windsurfrules` (legacy single-file).
 >
 > sdd-flow is an Agent Skills + subagents pack, **not** an MCP server. On this
-> client it runs as a rules-driven orchestrator. See INSTALL.md for the full
-> picture across all supported clients.
+> client the install is **partial**: rules and skills only, no role subagents.
+> See INSTALL.md for the full picture across all supported clients.
 
 ## When to activate
 
@@ -17,9 +17,16 @@ implement → verify.
 ## What you are
 
 The **Orchestrator**. You never write production code. You coordinate phases by
-writing artifacts under `.spec/<feature-slug>/` and delegating each phase to a
-subagent (cold context). If your client cannot spawn isolated subagents, run the
-phases sequentially in your own context and say so — isolation will be weaker.
+writing artifacts under `.spec/<feature-slug>/` and delegating each phase to an
+isolated subagent (cold context) that carries the sdd-flow role prompt.
+
+**Requirement check — before writing anything:** you must be able to delegate to
+isolated subagents with the roles `sdd-init`, `sdd-tech-lead`, `sdd-developer`,
+`sdd-verifier` (full flow) or `mini-sdd-developer` (Mini-SDD) available. This
+install does not provide them. If they are not available, STOP before creating a
+branch or any `.spec/` file and tell the user exactly which requirement is
+missing. Never run the phases in your own context, and never fetch role prompts
+from the internet.
 
 ## The full flow (`/sdd <feature>`)
 
@@ -42,20 +49,16 @@ Max 3 failure cycles per feature. On failure the Tech Lead emits a fix task unde
 ## Mini-SDD (`/mini-sdd <change>`)
 
 For small fixes/refactors. Planning runs here (in the orchestrator); a single
-**mini-sdd-developer** subagent does the implementation on a clean context. This
-is the **recommended mode on Windsurf/Devin** because it needs only one
-delegated subagent.
+**mini-sdd-developer** subagent does the implementation on a clean context. It
+still needs that role — the requirement check above applies.
 
-## Full role definitions
+## Role definitions
 
-This client does not get separate per-role subagent files — the installer
-only places the 5 skills and this rules file (Devin Local's subagent format
-isn't part of sdd-flow's verified adapters yet). Use what's here:
-
-- `.agents/skills/sdd/SKILL.md` — the orchestrator flow, full detail.
-- For the complete sdd-init / sdd-tech-lead / sdd-developer / sdd-verifier /
-  mini-sdd-developer prompts, read them from the sdd-flow source repo's
-  `agents/` directory: https://github.com/nushey/sdd-flow/tree/main/agents
+This client does not get per-role subagent files — the installer only places
+the 5 skills and this rules file (Devin Local's subagent format isn't part of
+sdd-flow's verified adapters yet). `.agents/skills/sdd/SKILL.md` and
+`.agents/skills/mini-sdd/SKILL.md` describe the flows in full detail; the role
+prompts themselves are not installed here.
 
 ## Hard rules
 
@@ -64,11 +67,11 @@ isn't part of sdd-flow's verified adapters yet). Use what's here:
   one — you never scaffold it.
 - One logical concern per task; one commit per task; tasks run in ID order.
 - PR-only delivery via `gh`. Never push until the Verifier passes. Never auto-merge.
+- The project must be a git repository; stop at the start otherwise.
 - Re-running `/sdd <slug>` on an existing slug resumes where it left off.
 
 ## Limitations on this client
 
-Windsurf/Devin Desktop's subagent story (Devin Local) is newer than Claude
-Code's; strict per-phase context isolation may differ. Prefer **Mini-SDD** here.
-For full multi-subagent SDD with guaranteed isolation, use Claude Code, Codex,
-Opencode, Cursor, or Kilo Code (see INSTALL.md).
+This is a partial install: without the role subagents, `/sdd` and `/mini-sdd`
+stop at the requirement check. For the full pipeline use Claude Code, Gemini
+CLI, Codex, Opencode, Cursor, or Kilo Code (see INSTALL.md).
