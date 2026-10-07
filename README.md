@@ -209,6 +209,7 @@ with findings and are never migrated automatically. Full grammar:
 | `sdd` | Skill | `/sdd <feature>` | Orchestrator — triages, writes `.spec/` artifacts, delegates each phase |
 | `mini-sdd` | Skill | `/mini-sdd <change>` | Leaner flow: planning in-orchestrator, one delegated developer subagent |
 | `sdd-plan` | Skill | ask for a plan, or loaded by `mini-sdd` | Proportional implementation plan without writing code; Mini-SDD's planner |
+| `sdd-review` | Skill | ask for a code review, acceptance review, or both | Delegates an isolated reviewer that applies this skill; no implementation |
 | `pr-creation` | Skill | only when you ask for a PR | PR body standard — value-oriented, minimal technical noise; not part of either flow |
 | `writing-skill` | Skill | loaded when a plan/task declares it | Standard for structured technical documentation |
 | `sdd-init` | Subagent | delegated, Phase 1 | Verifies `AGENTS.md`, refines `intake.md` → `scope.md` |
@@ -216,6 +217,31 @@ with findings and are never migrated automatically. Full grammar:
 | `sdd-developer` | Subagent | delegated once per task | Implements exactly one task, commits, fills Implementation log |
 | `sdd-verifier` | Subagent | delegated, Phase 4 | Runs tests, cross-checks logs vs. git, commits spec artifacts locally on PASS |
 | `mini-sdd-developer` | Subagent | delegated by Mini-SDD | Cold-context implementer for a Mini-SDD `plan.md`; executes all tasks, commits, reports back |
+
+### Standalone reviews
+
+Use `/sdd-review <request>` to review code, acceptance compliance, or both. Code
+reviews check project standards, reuse, and code quality. Acceptance reviews compare
+the implementation with the original request or supplied criteria, including
+unsupported business decisions. A complete review applies all three checks.
+
+```text
+/sdd-review review the uncommitted code changes
+/sdd-review check this implementation against the supplied acceptance criteria
+/sdd-review review both code quality and compliance with the original request
+```
+
+The invoking agent refines the user's query without expanding its scope and
+starts one isolated reviewer subagent with that prompt and the skill's path.
+The reviewer loads `sdd-review`, researches the actual implementation, and returns
+findings with file, line, evidence, impact, and a suggested correction. It does
+not delegate again. Questions go through the invoking agent; reports stay in
+chat unless a file is requested.
+
+Isolated subagent delegation is required, but no dedicated reviewer role,
+feature branch, spec folder, or checker is needed. If the harness cannot delegate,
+the skill stops rather than reviewing inline. Full SDD and Mini-SDD retain their
+existing verification steps; neither automatically loads `sdd-review`.
 
 Full prompt bodies live at `skills/<name>/SKILL.md` and `agents/<name>.md` — read them directly,
 there is no compiled/hidden variant.
