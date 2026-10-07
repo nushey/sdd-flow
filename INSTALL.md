@@ -5,7 +5,7 @@ It is **not** an MCP server — there is no process to spawn, no `command`/`args
 and nothing to register in an `mcpServers` block. sdd-flow ships two things:
 
 - **Skills** (`skills/<name>/SKILL.md`) — the orchestrator (`sdd`, `mini-sdd`) plus
-  standards (`pr-creation`, `writing-skill`, `sdd-plan`).
+  standards and standalone tools (`pr-creation`, `writing-skill`, `sdd-plan`, `sdd-review`).
 - **Subagent prompts** (`agents/<name>.md`) — the five roles:
   `sdd-init`, `sdd-tech-lead`, `sdd-developer`, `sdd-verifier`, `mini-sdd-developer`.
 
@@ -57,7 +57,11 @@ Antigravity receive skills (and rules) but no role subagents, so both flows stop
 before writing any `.spec/` artifact and tell you what is missing. They do not run
 the phases inline.
 
-### Before you start (all clients)
+### Before you start the SDD flows (all clients)
+
+Standalone `sdd-plan` requires no subagents. `sdd-review` requires isolated
+subagent delegation, but no registered reviewer role. Neither requires a feature
+branch or the checker. The following preconditions apply to `/sdd` and `/mini-sdd`.
 
 1. Your project **must have an `AGENTS.md`** at the root. SDD treats it as law and
    never creates it for you. (Optional companion `CLAUDE.md` is also read if present.)
@@ -137,7 +141,7 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
   | bash -s -- --client codex
 ```
 
-**What lands:** 5 skills in `.agents/skills/` and 5 custom agents in `.codex/agents/`
+**What lands:** 6 skills in `.agents/skills/` and 5 custom agents in `.codex/agents/`
 (as TOML with `name`, `description`, `developer_instructions`).
 
 **Global (every project on this machine):** `scripts/install.sh --client codex --global`
@@ -166,7 +170,7 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
   | bash -s -- --client opencode
 ```
 
-**What lands:** 5 skills in `.agents/skills/` and 5 subagents in `.opencode/agents/`
+**What lands:** 6 skills in `.agents/skills/` and 5 subagents in `.opencode/agents/`
 (each with `mode: subagent` injected into its frontmatter).
 
 **Global (every project on this machine):** `scripts/install.sh --client opencode --global`
@@ -188,7 +192,7 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
   | bash -s -- --client kilo
 ```
 
-**What lands:** 5 skills in `.agents/skills/` and 5 agents in `.kilo/agent/`.
+**What lands:** 6 skills in `.agents/skills/` and 5 agents in `.kilo/agent/`.
 
 **Global (every project on this machine):** `scripts/install.sh --client kilo --global`
 (or `-Client kilo -Global`) → `~/.kilo/skills/` + `~/.kilo/agent/`.
@@ -208,7 +212,7 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
   | bash -s -- --client cursor
 ```
 
-**What lands:** 5 skills in `.agents/skills/` and 5 subagents in `.cursor/agents/`.
+**What lands:** 6 skills in `.agents/skills/` and 5 subagents in `.cursor/agents/`.
 
 **Global (every project on this machine):** `scripts/install.sh --client cursor --global`
 (or `-Client cursor -Global`) → `~/.cursor/skills/` + `~/.cursor/agents/`. Cursor reads
@@ -239,7 +243,7 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
 
 - `.devin/rules/sdd.md` (preferred) **and** `.windsurfrules` (legacy fallback for
   pre-rebrand installs).
-- The 5 skills in `.agents/skills/`.
+- The 6 skills in `.agents/skills/`.
 - **No role subagents.** Devin Local's subagent format is not part of sdd-flow's
   verified adapters, so the installer ships no `sdd-init` / `sdd-tech-lead` /
   `sdd-developer` / `sdd-verifier` / `mini-sdd-developer` files for this client.
@@ -271,7 +275,7 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
   | bash -s -- --client antigravity
 ```
 
-**What lands:** the 5 skills in `.agents/skills/` (no subagent files).
+**What lands:** the 6 skills in `.agents/skills/` (no subagent files).
 
 **Global (every project on this machine):** `scripts/install.sh --client antigravity --global`
 (or `-Client antigravity -Global`) → `~/.gemini/config/skills/`. No subagent files
@@ -343,7 +347,7 @@ holds a `.sdd-flow-manifest` listing exactly what it installed there.
 **Project install** (run from the project root):
 
 ```bash
-rm -rf .agents/skills/{sdd,mini-sdd,sdd-plan,pr-creation,writing-skill} .agents/skills/.sdd-flow-manifest
+rm -rf .agents/skills/{sdd,mini-sdd,sdd-plan,sdd-review,pr-creation,writing-skill} .agents/skills/.sdd-flow-manifest
 # Codex:    rm -f .codex/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.toml .codex/agents/.sdd-flow-manifest
 # Opencode: rm -f .opencode/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .opencode/agents/.sdd-flow-manifest
 # Kilo:     rm -f .kilo/agent/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .kilo/agent/.sdd-flow-manifest
@@ -358,7 +362,7 @@ rm -rf .agents/skills/{sdd,mini-sdd,sdd-plan,pr-creation,writing-skill} .agents/
 # Skills, per client: ~/.agents/skills (Codex), ~/.config/opencode/skills (Opencode),
 # ~/.kilo/skills (Kilo), ~/.cursor/skills (Cursor), ~/.codeium/windsurf/skills (Windsurf),
 # ~/.gemini/config/skills (Antigravity). Example for Cursor:
-rm -rf ~/.cursor/skills/{sdd,mini-sdd,sdd-plan,pr-creation,writing-skill} ~/.cursor/skills/.sdd-flow-manifest
+rm -rf ~/.cursor/skills/{sdd,mini-sdd,sdd-plan,sdd-review,pr-creation,writing-skill} ~/.cursor/skills/.sdd-flow-manifest
 rm -f  ~/.cursor/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md ~/.cursor/agents/.sdd-flow-manifest
 # Agents, per client: ~/.codex/agents/*.toml (Codex), ~/.config/opencode/agents (Opencode), ~/.kilo/agent (Kilo).
 ```
