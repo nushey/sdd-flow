@@ -22,7 +22,7 @@ them. Keep a viable path forward rather than turning refinement into a verdict
 on whether the user should pursue their idea.
 
 Work with loose ideas and developed plans, in software or other domains. No
-repository, spec folder, or fresh conversation is required. Use the existing
+repository or fresh conversation is required. Use the existing
 conversation and respect decisions the user has already made.
 
 ## Understand and investigate
@@ -106,7 +106,9 @@ where relevant, without empty sections or a transcript of the conversation:
 - **Remaining uncertainty:** agreed evidence-gathering actions and the decisions
   they must resolve before dependent work begins.
 
-Write in the user's language. Deliver the plan in chat; save it to a file only
-when the user requests one. Stop after the plan. Do not implement changes,
-execute proposed experiments, create branches, commit, or start another flow.
+Write in the user's language. Save the refined plan to
+`.spec/<plan-name>/plan.md` in the workspace, using a name that identifies the
+plan and creating the folder when needed. Return its path. Stop after the plan.
+Do not implement changes, execute proposed experiments, create branches, commit,
+or start another flow.
 The user may carry the refined plan into an implementation workflow separately.

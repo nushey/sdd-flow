@@ -13,7 +13,7 @@ Turn a request into a plan that someone can execute without guessing. Plan only:
 
 ## Modes
 
-- **Standalone** (the user asks for a plan): deliver the plan in the chat and stop. Write it to `.spec/<slug>/plan.md` only when the user asks for a file.
+- **Standalone** (the user asks for a plan): save the plan to `.spec/<plan-name>/plan.md`, using a name that identifies the plan, then return its path and stop. Create the folder when needed.
 - **Mini-SDD** (loaded by `mini-sdd`): write the plan to the `.spec/<slug>/plan.md` path the flow provides, using the Mini-SDD contract below, and return control to `mini-sdd`. Approval and execution belong to that flow.
 
 ## 1. Research first
@@ -106,5 +106,5 @@ Refer to skills by name and to MCP tools by full identifier, never by the UI of 
 
 ## Done
 
-- Standalone: the plan in the chat, or the saved path when asked, and nothing else happens.
+- Standalone: the saved `.spec/<plan-name>/plan.md` path, and nothing else happens.
 - Mini-SDD: the saved path, a two-sentence summary of the approach, the number of tasks, the open risks, and what `Bootstrap` declares.

@@ -210,9 +210,9 @@ with findings and are never migrated automatically. Full grammar:
 | `mini-sdd` | Skill | `/mini-sdd <change>` | Leaner flow: planning in-orchestrator, one delegated developer subagent |
 | `sharp-me` | Skill | `/sharp-me <idea or plan>`, or ask to refine an approach together | Researches, asks questions, and proposes improvements until there is a refined action plan |
 | `sdd-plan` | Skill | ask for a plan, or loaded by `mini-sdd` | Proportional implementation plan without writing code; Mini-SDD's planner |
+| `sdd-implement` | Skill | ask to implement an existing plan, or `/sdd-implement <plan>` | Implements all or selected points in the current session or a subagent; cumulative history, no commits |
 | `sdd-review` | Skill | ask for a code review, acceptance review, or both | Delegates an isolated reviewer that applies this skill; no implementation |
 | `pr-creation` | Skill | only when you ask for a PR | PR body standard — value-oriented, minimal technical noise; not part of either flow |
-| `writing-skill` | Skill | loaded when a plan/task declares it | Standard for structured technical documentation |
 | `sdd-init` | Subagent | delegated, Phase 1 | Verifies `AGENTS.md`, refines `intake.md` → `scope.md` |
 | `sdd-tech-lead` | Subagent | delegated, Phase 2 + failure recovery | Writes `design.md`, `tasks.index.md`, task files; produces fix tasks on failure |
 | `sdd-developer` | Subagent | delegated once per task | Implements exactly one task, commits, fills Implementation log |
@@ -229,7 +229,7 @@ questions, and develops recommendations with you while preserving your intended
 outcome. Decisions that require evidence become agreed investigation steps.
 
 The result is a self-contained action plan with the agreed decisions, reasons,
-ordered steps, and verification. It stays in chat unless you request a file;
+ordered steps, and verification. It is saved to `.spec/<plan-name>/plan.md`;
 the skill does not implement the plan or start another flow. Use `sdd-plan`
 when you need a straightforward implementation breakdown, and `sdd-review`
 when you want to review an implementation.
@@ -237,6 +237,29 @@ when you want to review an implementation.
 ```text
 /sharp-me I want to run a neighborhood repair event. Help me improve my approach.
 /sharp-me Refine this migration plan with me and look for simpler alternatives.
+```
+
+### Implement an existing plan
+
+Use `/sdd-implement <plan>` to implement a plan from any source, including
+`sdd-plan`, `sharp-me`, an external file, or the conversation. Standalone
+`sdd-plan` and `sharp-me` save their plans under `.spec/<plan-name>/`. External
+plans are copied there without rewriting their content.
+
+When not specified, the skill asks which points to implement and whether to work
+in the current session or an isolated subagent. It investigates relevant code
+and discusses ambiguous requirements, missing technical direction, and dependencies
+with you before implementing. Clarifications do not generate a replacement plan.
+
+The original plan stays unchanged. A cumulative `history.md` beside it records
+agreed decisions, work performed, checks, and pending points. It is created when
+missing and reused across executions. The skill makes no commits and needs no
+registered developer role; isolated delegation is needed only for subagent mode.
+Full SDD and Mini-SDD retain their own execution, commits, and tracking.
+
+```text
+/sdd-implement Implement all points in .spec/settings-search/plan.md in this session.
+/sdd-implement Implement points 2 and 3 of the supplied plan using a subagent.
 ```
 
 ### Standalone reviews
