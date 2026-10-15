@@ -208,6 +208,7 @@ with findings and are never migrated automatically. Full grammar:
 |------|------|------------|---------|
 | `sdd` | Skill | `/sdd <feature>` | Orchestrator — triages, writes `.spec/` artifacts, delegates each phase |
 | `mini-sdd` | Skill | `/mini-sdd <change>` | Leaner flow: planning in-orchestrator, one delegated developer subagent |
+| `sharp-me` | Skill | `/sharp-me <idea or plan>`, or ask to refine an approach together | Researches, asks questions, and proposes improvements until there is a refined action plan |
 | `sdd-plan` | Skill | ask for a plan, or loaded by `mini-sdd` | Proportional implementation plan without writing code; Mini-SDD's planner |
 | `sdd-review` | Skill | ask for a code review, acceptance review, or both | Delegates an isolated reviewer that applies this skill; no implementation |
 | `pr-creation` | Skill | only when you ask for a PR | PR body standard — value-oriented, minimal technical noise; not part of either flow |
@@ -217,6 +218,26 @@ with findings and are never migrated automatically. Full grammar:
 | `sdd-developer` | Subagent | delegated once per task | Implements exactly one task, commits, fills Implementation log |
 | `sdd-verifier` | Subagent | delegated, Phase 4 | Runs tests, cross-checks logs vs. git, commits spec artifacts locally on PASS |
 | `mini-sdd-developer` | Subagent | delegated by Mini-SDD | Cold-context implementer for a Mini-SDD `plan.md`; executes all tasks, commits, reports back |
+
+### Collaborative refinement
+
+Use `/sharp-me <idea or plan>` to explore better ways to accomplish a goal,
+uncover blind spots, and simplify an approach. It works with loose ideas and
+existing plans, including topics outside software, and needs no repository or
+subagents. It researches relevant context, asks brief rounds of independent
+questions, and develops recommendations with you while preserving your intended
+outcome. Decisions that require evidence become agreed investigation steps.
+
+The result is a self-contained action plan with the agreed decisions, reasons,
+ordered steps, and verification. It stays in chat unless you request a file;
+the skill does not implement the plan or start another flow. Use `sdd-plan`
+when you need a straightforward implementation breakdown, and `sdd-review`
+when you want to review an implementation.
+
+```text
+/sharp-me I want to run a neighborhood repair event. Help me improve my approach.
+/sharp-me Refine this migration plan with me and look for simpler alternatives.
+```
 
 ### Standalone reviews
 
