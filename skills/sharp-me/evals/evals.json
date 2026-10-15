@@ -1,0 +1,38 @@
+{
+  "skill_name": "sharp-me",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I want to run a monthly neighborhood repair event. My first thought is to build a custom app with volunteer accounts, booking slots, and notifications before announcing it. Help me sharpen the idea and figure out a better way to carry it out. I have not decided on a venue, who will volunteer, or which repairs we can offer. Please start the conversation; do not invent my answers.",
+      "expected_output": "Preserve the goal of running the event, explore a simpler way to organize it as a proposal, and ask a brief round of foundational questions. Do not decide the event's operating rules or ask detailed questions whose prerequisites remain unknown. Wait for answers instead of producing a supposedly finished plan.",
+      "files": [],
+      "expectations": [
+        "Keep organizing the repair event as the goal; offer any simpler alternative to building the app as a proposal rather than an agreed decision.",
+        "Ask about unresolved foundational choices without assuming a venue, volunteer team, or repair scope.",
+        "Stop for the user's answers without presenting the event's operating rules or a final execution plan as settled."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Help me refine this plan for a small community newsletter. All decisions below are confirmed: send one email each month to the existing opt-in list using our existing email service; collect submissions in our existing shared document; I approve the content; Sam sends the approved email; no website, automation, new tools, or additional approval rounds. The sequence is collect submissions, draft the issue, approve it, send it, and check the service's delivery report. Success means the approved issue reaches the existing list every month. You can deliver the refined action plan now if nothing material is missing.",
+      "expected_output": "Deliver a self-contained, proportionate action plan that retains the sound approach and confirmed responsibilities. Do not manufacture a criticism or force an interview. Do not add an unrequested deadline, tool, metric, fallback, or business rule. Explain any genuine refinement and how success will be checked without executing the plan.",
+      "files": [],
+      "expectations": [
+        "Deliver an actionable plan that preserves the monthly cadence, existing tools and opt-in list, user approval, and Sam's sending responsibility.",
+        "Use the existing delivery report to verify the stated success condition without adding a new target, tool, deadline, fallback, or approval round.",
+        "Do not block the plan with unnecessary questions or manufacture a problem with the confirmed approach."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I want customers to finish our enrollment process more easily. We have already agreed to keep the same required information and eligibility rules, and we have approval to compare disposable mockups before implementation. I am torn between one long page and three short pages. I genuinely do not know which will be easier for our customers, and we have no user observations yet. Help me refine the path forward without guessing the answer or building anything yet.",
+      "expected_output": "Recognize the evidence gap, propose a focused comparison of the two mockups that preserves the confirmed requirements, and ask the user to agree on the meaningful observation or decision that is still missing. Do not choose a page layout as fact, invent a participant count or threshold, execute a prototype, or present dependent implementation work as ready.",
+      "files": [],
+      "expectations": [
+        "Keep the layout undecided and preserve the confirmed information and eligibility rules.",
+        "Propose obtaining evidence from a comparison of the two mockups and seek agreement on the unresolved observation or decision.",
+        "Do not invent a participant count or winning threshold, build the mockups, or treat dependent implementation work as ready."
+      ]
+    }
+  ]
+}
