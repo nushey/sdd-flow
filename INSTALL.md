@@ -5,7 +5,7 @@ It is **not** an MCP server — there is no process to spawn, no `command`/`args
 and nothing to register in an `mcpServers` block. sdd-flow ships two things:
 
 - **Skills** (`skills/<name>/SKILL.md`) — the orchestrator (`sdd`, `mini-sdd`) plus
-  standards and standalone tools (`sharp-me`, `pr-creation`, `writing-skill`, `sdd-plan`, `sdd-review`).
+  standards and standalone tools (`sharp-me`, `pr-creation`, `sdd-plan`, `sdd-implement`, `sdd-review`).
 - **Subagent prompts** (`agents/<name>.md`) — the five roles:
   `sdd-init`, `sdd-tech-lead`, `sdd-developer`, `sdd-verifier`, `mini-sdd-developer`.
 
@@ -61,8 +61,12 @@ the phases inline.
 
 Standalone `sharp-me` and `sdd-plan` require no subagents. `sharp-me` also works
 without a repository. `sdd-review` requires isolated subagent delegation, but no
-registered reviewer role. These standalone skills require no feature branch or
-checker. The following preconditions apply to `/sdd` and `/mini-sdd`.
+registered reviewer role. `sdd-implement` works in the current session or an
+isolated subagent, according to the user's choice, without a registered developer
+role or commits. Plans from `sharp-me` and standalone `sdd-plan` are saved under
+`.spec/<plan-name>/`; `sdd-implement` imports external plans there and keeps a
+separate cumulative `history.md`. These standalone skills require no feature
+branch or checker. The following preconditions apply to `/sdd` and `/mini-sdd`.
 
 1. Your project **must have an `AGENTS.md`** at the root. SDD treats it as law and
    never creates it for you. (Optional companion `CLAUDE.md` is also read if present.)
@@ -328,8 +332,8 @@ scripts/generate-adapters.sh
 | `ERROR unsupported format: plan.md (Full SDD only)` | Expected for Mini-SDD/standalone plans: `sdd check` validates Full SDD specs only. |
 | `sdd check` reports `BAD_ID` / `MISSING_SECTION` on an older spec | Specs created before AC IDs are not migrated automatically. Add `AC-NNN` IDs to `scope.md`, `## Covers` to each task, and the `Covers` column to `tasks.index.md` by hand, keeping task IDs and hashes. |
 | Want to publish the feature | Push and open the PR yourself (optionally with the `pr-creation` skill). Neither flow publishes. |
-| Want the newest skills/agents | Re-run the same install command. Paths sdd-flow installed (listed in the `.sdd-flow-manifest` next to them) are replaced; identical content is kept. Installs from 0.6.1 or earlier keep the replaced `mini-sdd-planner` skill: delete that folder from the skill directory. |
-| `error: these paths exist, differ from sdd-flow and were not installed by it` | A file or folder with a pack name already exists and has no installation record (for example your own `writing-skill`, or an install made before the manifest existed). Nothing was copied. Move it away, or re-run with `--force` / `-Force` to replace exactly the listed paths. |
+| Want the newest skills/agents | Re-run the same install command. Paths sdd-flow installed (listed in the `.sdd-flow-manifest` next to them) are replaced; identical content is kept. Older installs retain retired skills such as `mini-sdd-planner` and `writing-skill`: delete those folders from the skill directory. |
+| `error: these paths exist, differ from sdd-flow and were not installed by it` | A file or folder with a pack name already exists and has no installation record (for example your own `sdd-plan`, or an install made before the manifest existed). Nothing was copied. Move it away, or re-run with `--force` / `-Force` to replace exactly the listed paths. |
 | `error: the cache at ... was cloned from ..., not ...` | The clone cache belongs to another `--source`. Remove it or set `SDD_FLOW_CACHE` to another directory. |
 | `error: git fetch/checkout/clone failed; nothing was installed` | Fix the network or the local changes in the cache; the installer never resets the cache and copies nothing after a git error. |
 | Wrong project targeted | Add `--target /path/to/project` (bash) or `-Target` (PowerShell). |
@@ -348,7 +352,7 @@ holds a `.sdd-flow-manifest` listing exactly what it installed there.
 **Project install** (run from the project root):
 
 ```bash
-rm -rf .agents/skills/{sdd,mini-sdd,sharp-me,sdd-plan,sdd-review,pr-creation,writing-skill} .agents/skills/.sdd-flow-manifest
+rm -rf .agents/skills/{sdd,mini-sdd,sharp-me,sdd-plan,sdd-implement,sdd-review,pr-creation} .agents/skills/.sdd-flow-manifest
 # Codex:    rm -f .codex/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.toml .codex/agents/.sdd-flow-manifest
 # Opencode: rm -f .opencode/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .opencode/agents/.sdd-flow-manifest
 # Kilo:     rm -f .kilo/agent/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .kilo/agent/.sdd-flow-manifest
@@ -363,7 +367,7 @@ rm -rf .agents/skills/{sdd,mini-sdd,sharp-me,sdd-plan,sdd-review,pr-creation,wri
 # Skills, per client: ~/.agents/skills (Codex), ~/.config/opencode/skills (Opencode),
 # ~/.kilo/skills (Kilo), ~/.cursor/skills (Cursor), ~/.codeium/windsurf/skills (Windsurf),
 # ~/.gemini/config/skills (Antigravity). Example for Cursor:
-rm -rf ~/.cursor/skills/{sdd,mini-sdd,sharp-me,sdd-plan,sdd-review,pr-creation,writing-skill} ~/.cursor/skills/.sdd-flow-manifest
+rm -rf ~/.cursor/skills/{sdd,mini-sdd,sharp-me,sdd-plan,sdd-implement,sdd-review,pr-creation} ~/.cursor/skills/.sdd-flow-manifest
 rm -f  ~/.cursor/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md ~/.cursor/agents/.sdd-flow-manifest
 # Agents, per client: ~/.codex/agents/*.toml (Codex), ~/.config/opencode/agents (Opencode), ~/.kilo/agent (Kilo).
 ```
