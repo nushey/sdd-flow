@@ -68,6 +68,10 @@ Run the installer with **no flags** to launch the interactive wizard. It asks fo
 plus `universal`) unchecked, grouping the ones that share a skills directory, so you pick exactly
 which to install:
 
+The wizard highlights the focused client and checked selections, keeps keyboard hints
+visible, and scrolls the list in smaller terminals. Navigation updates the affected
+rows without redrawing the entire menu.
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.sh | bash
 ```
