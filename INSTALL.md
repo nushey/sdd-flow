@@ -22,6 +22,12 @@ Run the installer with **no flags** to launch the interactive wizard. It first a
 client once, all unchecked: move with ↑↓, toggle with Space, confirm with Enter (at least one
 client is required).
 
+The focused client has a cyan `>` pointer, and selected clients have a green `[x]`.
+Highlighted keyboard hints stay visible below the list. In smaller terminals, the list
+scrolls with the arrow keys while keeping the focused client and its group visible;
+long names, paths and statuses continue onto additional lines. Navigation updates only
+the affected rows to avoid flashing the whole menu.
+
 - Clients that share a skills directory for the chosen scope (for example `.agents/skills`
   locally) are grouped under a *shared, installed together* heading: the skills are written
   once and used by all of them. Each client's subagents are installed only if you check it.

@@ -210,6 +210,75 @@ function Format-HomePath($path) {
     return $path
 }
 
+function Get-WizardLines([string]$text, [int]$width) {
+    while ($text.Length -gt $width) {
+        $part = $text.Substring(0, $width)
+        $space = $part.LastIndexOf(' ')
+        if ($space -gt 0) { $part = $part.Substring(0, $space) }
+        $part
+        $text = $text.Substring($part.Length)
+        if ($text.StartsWith(' ')) { $text = $text.Substring(1) }
+    }
+    $text
+}
+
+function Restore-WizardColor($foreground) {
+    if ([int]$foreground -eq -1) { [Console]::ResetColor() }
+    else { [Console]::ForegroundColor = $foreground }
+}
+
+function Write-WizardLine($line, [int]$width, $foreground) {
+    $emphasis = if ([int]$foreground -eq -1) { [ConsoleColor]::Cyan } else { [ConsoleColor]([int]$foreground -bor 8) }
+    Restore-WizardColor $foreground
+    switch ($line.Kind) {
+        'client' {
+            if ($line.Focused) { [Console]::ForegroundColor = 'Cyan' }
+            [Console]::Write($line.Text.Substring(0, 2))
+            [Console]::ForegroundColor = if ($line.Checked) { 'Green' } else { $emphasis }
+            [Console]::Write($line.Text.Substring(2, 3))
+            if ($line.Plugin) { [Console]::ForegroundColor = 'Red' }
+            elseif ($line.Focused) { [Console]::ForegroundColor = $emphasis }
+            else { Restore-WizardColor $foreground }
+            [Console]::Write($line.Text.Substring(5))
+        }
+        'continuation' {
+            if ($line.Plugin) { [Console]::ForegroundColor = 'Red' }
+            elseif ($line.Focused) { [Console]::ForegroundColor = $emphasis }
+            else { Restore-WizardColor $foreground }
+            [Console]::Write($line.Text)
+        }
+        'help' {
+            $offset = 0
+            foreach ($match in [regex]::Matches($line.Text, '\[[^\]]+\]')) {
+                [Console]::Write($line.Text.Substring($offset, $match.Index - $offset))
+                [Console]::ForegroundColor = 'Cyan'
+                [Console]::Write($match.Value)
+                Restore-WizardColor $foreground
+                $offset = $match.Index + $match.Length
+            }
+            [Console]::Write($line.Text.Substring($offset))
+        }
+        'message' {
+            [Console]::ForegroundColor = 'Yellow'
+            [Console]::Write($line.Text)
+        }
+        'heading' {
+            [Console]::ForegroundColor = $emphasis
+            [Console]::Write($line.Text)
+        }
+        default { [Console]::Write($line.Text) }
+    }
+    Restore-WizardColor $foreground
+    if ($Host.UI.SupportsVirtualTerminal) {
+        [Console]::Write(([string][char]27 + '[K'))
+    } else {
+        $top = [Console]::CursorTop
+        $rectangle = New-Object System.Management.Automation.Host.Rectangle ([Console]::CursorLeft),$top,$width,$top
+        $cell = New-Object System.Management.Automation.Host.BufferCell ' ',$foreground,([Console]::BackgroundColor),Complete
+        $Host.UI.RawUI.SetBufferContents($rectangle, $cell)
+    }
+}
+
 function Select-ClientsWizard {
     $dirs = @($ClientsAll | ForEach-Object { Get-SkillsDir $_ })
     $shared = @($dirs | Group-Object | Where-Object { $_.Count -gt 1 } | ForEach-Object { $_.Name })
@@ -226,76 +295,159 @@ function Select-ClientsWizard {
     }
     $badges = @($ClientsAll | ForEach-Object { if (Test-ClientDetected $_) { ' [detected]' } else { '' } })
     $plugins = @($ClientsAll | ForEach-Object { Test-PluginInstalled $_ })
+    $labels = @($ClientsAll | ForEach-Object { Get-ClientLabel $_ })
     $checked = New-Object bool[] $ClientsAll.Count
     $cursor = 0
     while ($rows[$cursor].Kind -ne 'c') { $cursor++ }
     $message = ''
-    $top = -1
+    $oldWidth = 0
+    $oldHeight = 0
+    $start = 0
+    $previous = @()
+    $foreground = [Console]::ForegroundColor
+    $arrows = [string][char]0x2191 + [char]0x2193
+    $title = 'sdd-flow ' + [char]0x00b7 + ' Installation'
 
-    Write-Host ''
-    while ($true) {
-        if ($top -ge 0) { [Console]::SetCursorPosition(0, $top) }
-        $width = [Math]::Max([Console]::WindowWidth - 1, 1)
-        Write-Host ('Select client(s) to install (Up/Down move, Space select, Enter confirm):'.PadRight($width))
-        for ($r = 0; $r -lt $rows.Count; $r++) {
-            $row = $rows[$r]
-            if ($row.Kind -eq 'h') {
-                Write-Host ($row.Text.PadRight($width))
-                continue
+    try {
+        [Console]::Write(("`n" * ([Console]::WindowHeight - 1)))
+        while ($true) {
+            $width = [Console]::WindowWidth - 1
+            $height = [Console]::WindowHeight
+            $top = [Console]::WindowTop
+            $resized = $width -ne $oldWidth -or $height -ne $oldHeight
+            if ($resized) {
+                $oldWidth = $width
+                $oldHeight = $height
+                $content = New-Object System.Collections.Generic.List[object]
+                $groupSizes = @{}
+                $clientStarts = @{}
+                $clientEnds = @{}
+                $start = 0
+                foreach ($row in $rows) {
+                    if ($row.Kind -eq 'h') {
+                        $group = $content.Count
+                        foreach ($line in @(Get-WizardLines $row.Text $width)) {
+                            $content.Add(@{ Text = $line; Index = -1; First = $false; Group = $group })
+                        }
+                        $groupSizes[$group] = $content.Count - $group
+                    } else {
+                        $i = $row.Index
+                        $clientStarts[$i] = $content.Count
+                        $first = $true
+                        $text = $labels[$i] + $row.Hint + $badges[$i]
+                        if ($plugins[$i]) { $text += ' [plugin installed]' }
+                        foreach ($line in @(Get-WizardLines $text ($width - 6))) {
+                            $content.Add(@{ Text = $line; Index = $i; First = $first; Group = $group })
+                            $first = $false
+                        }
+                        $clientEnds[$i] = $content.Count - 1
+                    }
+                }
             }
-            $i = $row.Index
-            $c = $ClientsAll[$i]
-            $pointer = if ($r -eq $cursor) { '>' } else { ' ' }
-            $mark = if ($checked[$i]) { '[x]' } else { '[ ]' }
-            $line = "{0} {1} {2,-12} {3}{4}{5}" -f $pointer, $mark, $c, (Get-ClientLabel $c), $row.Hint, $badges[$i]
-            if ($plugins[$i]) {
-                Write-Host ("$line [plugin installed]".PadRight($width)) -ForegroundColor Red
-            } else {
-                Write-Host ($line.PadRight($width))
-            }
-        }
-        Write-Host ($message.PadRight($width))
-        if ($top -lt 0) { $top = [Console]::CursorTop - $rows.Count - 2 }
-        $message = ''
 
-        $key = [Console]::ReadKey($true)
-        switch ($key.Key) {
-            'UpArrow' {
-                for ($r = $cursor - 1; $r -ge 0; $r--) {
-                    if ($rows[$r].Kind -eq 'c') { $cursor = $r; break }
+            $i = $rows[$cursor].Index
+            $available = $height - 6
+            if ($start -gt $clientStarts[$i]) { $start = $clientStarts[$i] }
+            while ($true) {
+                $group = $content[$start].Group
+                $sticky = if ($group -lt $start) { $groupSizes[$group] } else { 0 }
+                if ($clientEnds[$i] -lt $start + $available - $sticky -or $start -ge $clientStarts[$i]) { break }
+                $start++
+                if ($content[$start].Index -lt 0) {
+                    $group = $content[$start].Group
+                    $start = $group + $groupSizes[$group]
                 }
             }
-            'DownArrow' {
-                for ($r = $cursor + 1; $r -lt $rows.Count; $r++) {
-                    if ($rows[$r].Kind -eq 'c') { $cursor = $r; break }
+
+            $frame = @(for ($r = 0; $r -lt $height; $r++) { @{ Text = ''; Kind = 'plain' } })
+            $frame[0] = @{ Text = $title; Kind = 'heading' }
+            $frame[1] = @{ Text = 'Select clients'; Kind = 'heading' }
+            $pos = 3
+            for ($r = $group; $r -lt $group + $sticky; $r++) {
+                $frame[$pos] = @{ Text = $content[$r].Text; Kind = 'heading' }
+                $pos++
+            }
+            for ($r = $start; $r -lt $content.Count -and $pos -lt $height - 3; $r++) {
+                $item = $content[$r]
+                $c = $item.Index
+                if ($c -lt 0) {
+                    $frame[$pos] = @{ Text = $item.Text; Kind = 'heading' }
+                } else {
+                    $prefix = '      '
+                    $kind = 'continuation'
+                    if ($item.First) {
+                        $pointer = if ($c -eq $i) { '>' } else { ' ' }
+                        $mark = if ($checked[$c]) { '[x]' } else { '[ ]' }
+                        $prefix = "$pointer $mark "
+                        $kind = 'client'
+                    }
+                    $frame[$pos] = @{ Text = $prefix + $item.Text; Kind = $kind; Focused = ($c -eq $i); Checked = ($item.First -and $checked[$c]); Plugin = $plugins[$c] }
+                }
+                $pos++
+            }
+            $frame[$height - 3] = @{ Text = $message; Kind = 'message' }
+            $frame[$height - 2] = @{ Text = "[$arrows] Move   [Space] Select"; Kind = 'help' }
+            $frame[$height - 1] = @{ Text = '[Enter] Confirm'; Kind = 'help' }
+            for ($r = 0; $r -lt $height; $r++) {
+                $line = $frame[$r]
+                $old = if ($r -lt $previous.Count) { $previous[$r] } else { $null }
+                if ($resized -or -not $old -or $line.Text -cne $old.Text -or $line.Kind -ne $old.Kind -or $line.Focused -ne $old.Focused -or $line.Checked -ne $old.Checked -or $line.Plugin -ne $old.Plugin) {
+                    [Console]::SetCursorPosition(0, $top + $r)
+                    Write-WizardLine $line $width $foreground
                 }
             }
-            'Spacebar' {
-                $i = $rows[$cursor].Index
-                $checked[$i] = -not $checked[$i]
-            }
-            'Enter' {
-                for ($i = 0; $i -lt $ClientsAll.Count; $i++) {
-                    if ($checked[$i]) { Add-SelectedClient $ClientsAll[$i] }
+            $previous = $frame
+            $message = ''
+
+            $key = [Console]::ReadKey($true)
+            switch ($key.Key) {
+                'UpArrow' {
+                    for ($r = $cursor - 1; $r -ge 0; $r--) {
+                        if ($rows[$r].Kind -eq 'c') { $cursor = $r; break }
+                    }
                 }
-                if ($SelectedClients.Count -gt 0) {
-                    Write-Host "Selected: $($SelectedClients -join ' ')"
-                    return
+                'DownArrow' {
+                    for ($r = $cursor + 1; $r -lt $rows.Count; $r++) {
+                        if ($rows[$r].Kind -eq 'c') { $cursor = $r; break }
+                    }
                 }
-                $message = '  select at least one client'
+                'Spacebar' {
+                    $i = $rows[$cursor].Index
+                    $checked[$i] = -not $checked[$i]
+                }
+                'Enter' {
+                    for ($i = 0; $i -lt $ClientsAll.Count; $i++) {
+                        if ($checked[$i]) { Add-SelectedClient $ClientsAll[$i] }
+                    }
+                    if ($SelectedClients.Count -gt 0) { break }
+                    $message = '  select at least one client'
+                }
             }
+            if ($SelectedClients.Count -gt 0) { break }
         }
+    } finally {
+        Restore-WizardColor $foreground
+        [Console]::SetCursorPosition(0, [Console]::WindowTop + [Console]::WindowHeight - 1)
+        [Console]::WriteLine()
     }
+    Write-Host "Selected: $($SelectedClients -join ' ')"
 }
 
 function Select-ScopeWizard {
+    $width = [Console]::WindowWidth - 1
+    $foreground = [Console]::ForegroundColor
     Write-Host ''
-    Write-Host 'Select installation scope:'
-    Write-Host '   1) Global -- user-level (~/.claude, ~/.gemini, ~/.cursor, etc.), available across all projects'
-    Write-Host "   2) Local  -- project-level ($Target)"
+    foreach ($text in @(('sdd-flow ' + [char]0x00b7 + ' Installation'), 'Select installation scope:')) {
+        Write-WizardLine @{ Text = $text; Kind = 'heading' } $width $foreground
+        [Console]::WriteLine()
+    }
+    foreach ($text in @('1) Global -- user-level, available across all projects', "2) Local -- project-level ($Target)")) {
+        foreach ($line in @(Get-WizardLines $text $width)) { Write-Host $line -ForegroundColor Cyan }
+    }
     Write-Host ''
     while ($true) {
-        $choice = Read-Host 'Enter scope [1=global, 2=local] (default: 1)'
+        Write-Host -NoNewline 'Enter scope [1=global, 2=local] (default: 1): ' -ForegroundColor Cyan
+        $choice = Read-Host
         if ([string]::IsNullOrWhiteSpace($choice)) { $choice = '1' }
         switch ($choice.ToLowerInvariant()) {
             { $_ -in @('1','g','global') } {
