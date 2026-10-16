@@ -221,11 +221,36 @@ skills_dir() {
   fi
 }
 
+wizard_wrap() {
+  local text="$1" width="$2" part
+  while [[ "${#text}" -gt "$width" ]]; do
+    part="${text:0:$width}"
+    [[ "$part" == *' '* && "$part" != ' '* ]] && part="${part% *}"
+    printf '%s\n' "$part"
+    text="${text:${#part}}"
+    text="${text# }"
+  done
+  printf '%s\n' "$text"
+}
+
+wizard_restore_terminal() {
+  local height width
+  stty "$1" < /dev/tty
+  IFS=' ' read -r height width < <(stty size < /dev/tty)
+  printf '\033[0m\033[?25h\033[%d;1H\n' "$height" > /dev/tty
+}
+
 wizard_select_clients() {
-  local i r c dir n key rest line cursor=-1 drawn=0 message="" tilde='~'
-  local dirs=() shared=() row_kinds=() row_values=() checked=() hints=() badges=() plugins=()
+  local i r c dir n key rest line cursor=-1 message="" tilde='~'
+  local height width old_height=0 old_width=0 start=0 group=0 sticky available pos
+  local output move prefix style wizard_tty_state resized
+  local reset=$'\033[0m' bold=$'\033[1m' cyan=$'\033[1;36m' green=$'\033[1;32m' red=$'\033[31m'
+  local dirs=() shared=() row_kinds=() row_values=() checked=() hints=() badges=() plugins=() labels=()
+  local content=() owners=() first=() groups=() group_sizes=() client_starts=() client_ends=()
+  local frame=() previous=()
   for i in "${!CLIENTS_ALL[@]}"; do
     dirs+=("$(skills_dir "${CLIENTS_ALL[$i]}")")
+    labels+=("$(client_label "${CLIENTS_ALL[$i]}")")
     checked+=(0)
     badges+=("$(is_client_detected "${CLIENTS_ALL[$i]}" && printf ' [detected]' || true)")
     if has_plugin_install "${CLIENTS_ALL[$i]}"; then
@@ -274,33 +299,104 @@ wizard_select_clients() {
     fi
   done
 
-  echo "" > /dev/tty
+  wizard_tty_state="$(stty -g < /dev/tty)"
+  trap 'wizard_restore_terminal "$wizard_tty_state"' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  trap 'exit 129' HUP
+  stty -echo < /dev/tty
+  read -r height width < <(stty size < /dev/tty)
+  output=$'\033[?25l'
+  for ((r = 1; r < height; r++)); do output+=$'\n'; done
+  printf '%s' "$output" > /dev/tty
   while true; do
-    [[ "$drawn" -gt 0 ]] && printf '\033[%dA\033[J' "$drawn" > /dev/tty
-    drawn=0
-    {
-      echo "Select client(s) to install (↑↓ move, space select, enter confirm):"
-      drawn=$((drawn + 1))
+    read -r height width < <(stty size < /dev/tty)
+    width=$((width - 1))
+    resized=0
+    if [[ "$width" -ne "$old_width" || "$height" -ne "$old_height" ]]; then
+      resized=1
+      old_width="$width"
+      old_height="$height"
+      content=() owners=() first=() groups=() group_sizes=() client_starts=() client_ends=()
+      start=0
       for r in "${!row_kinds[@]}"; do
         if [[ "${row_kinds[$r]}" == "h" ]]; then
-          echo "${row_values[$r]}"
+          group="${#content[@]}"
+          while IFS= read -r line; do
+            content+=("$line") owners+=(-1) first+=(0) groups+=("$group")
+          done < <(wizard_wrap "${row_values[$r]}" "$width")
+          group_sizes[$group]=$((${#content[@]} - group))
         else
           i="${row_values[$r]}"
-          c="${CLIENTS_ALL[$i]}"
-          line="$( [[ "$r" -eq "$cursor" ]] && printf '>' || printf ' ')"
-          line+=" $( [[ "${checked[$i]}" -eq 1 ]] && printf '[x]' || printf '[ ]')"
-          line+="$(printf ' %-12s %s' "$c" "$(client_label "$c")")${hints[$i]}${badges[$i]}"
-          if [[ "${plugins[$i]}" -eq 1 ]]; then
-            printf '\033[31m%s\033[0m\n' "$line"
+          client_starts[$i]="${#content[@]}"
+          n=1
+          while IFS= read -r line; do
+            content+=("$line") owners+=("$i") first+=("$n") groups+=("$group")
+            n=0
+          done < <(wizard_wrap "${labels[$i]}${hints[$i]}${badges[$i]}" "$((width - 6))")
+          client_ends[$i]=$((${#content[@]} - 1))
+        fi
+      done
+    fi
+
+    i="${row_values[$cursor]}"
+    available=$((height - 6))
+    [[ "$start" -gt "${client_starts[$i]}" ]] && start="${client_starts[$i]}"
+    while true; do
+      group="${groups[$start]}"
+      sticky=0
+      [[ "$group" -lt "$start" ]] && sticky="${group_sizes[$group]}"
+      [[ "${client_ends[$i]}" -lt "$((start + available - sticky))" || "$start" -ge "${client_starts[$i]}" ]] && break
+      start=$((start + 1))
+      if [[ "${owners[$start]}" -eq -1 ]]; then
+        group="${groups[$start]}"
+        start=$((group + group_sizes[group]))
+      fi
+    done
+
+    frame=()
+    for ((r = 0; r < height; r++)); do frame+=(""); done
+    frame[0]="${bold}sdd-flow · Installation${reset}"
+    frame[1]="${bold}Select clients${reset}"
+    pos=3
+    for ((r = group; r < group + sticky; r++)); do
+      frame[$pos]="${bold}${content[$r]}${reset}"
+      pos=$((pos + 1))
+    done
+    for ((r = start; r < ${#content[@]} && pos < height - 3; r++)); do
+      c="${owners[$r]}"
+      if [[ "$c" -lt 0 ]]; then
+        frame[$pos]="${bold}${content[$r]}${reset}"
+      else
+        prefix='      '
+        if [[ "${first[$r]}" -eq 1 ]]; then
+          prefix='  '
+          [[ "$c" -eq "$i" ]] && prefix="${cyan}> ${reset}"
+          if [[ "${checked[$c]}" -eq 1 ]]; then
+            prefix+="${green}[x]${reset} "
           else
-            echo "$line"
+            prefix+="${bold}[ ]${reset} "
           fi
         fi
-        drawn=$((drawn + 1))
-      done
-      echo "$message"
-      drawn=$((drawn + 1))
-    } > /dev/tty
+        style=""
+        [[ "$c" -eq "$i" ]] && style="$bold"
+        [[ "${plugins[$c]}" -eq 1 ]] && style+="$red"
+        frame[$pos]="${prefix}${style}${content[$r]}${reset}"
+      fi
+      pos=$((pos + 1))
+    done
+    frame[$((height - 3))]="${bold}${message}${reset}"
+    frame[$((height - 2))]="${cyan}[↑↓]${reset} Move   ${cyan}[Space]${reset} Select"
+    frame[$((height - 1))]="${cyan}[Enter]${reset} Confirm"
+    output=""
+    for r in "${!frame[@]}"; do
+      if [[ "$resized" -eq 1 || "${frame[$r]}" != "${previous[$r]-}" ]]; then
+        printf -v move '\033[%d;1H' "$((r + 1))"
+        output+="${move}${frame[$r]}${reset}"$'\033[K'
+      fi
+    done
+    [[ -z "$output" ]] || printf '%s' "$output" > /dev/tty
+    previous=("${frame[@]}")
     message=""
     IFS= read -rsn1 key < /dev/tty || exit 1
     case "$key" in
@@ -324,6 +420,8 @@ wizard_select_clients() {
           [[ "${checked[$i]}" -eq 1 ]] && add_selected_client "${CLIENTS_ALL[$i]}"
         done
         if [[ "${#SELECTED_CLIENTS[@]}" -gt 0 ]]; then
+          wizard_restore_terminal "$wizard_tty_state"
+          trap - EXIT INT TERM HUP
           echo "Selected: ${SELECTED_CLIENTS[*]}" > /dev/tty
           return
         fi
@@ -333,15 +431,18 @@ wizard_select_clients() {
 }
 
 wizard_select_scope() {
-  local choice abs_target
+  local choice abs_target height width line
   abs_target="$(cd "$TARGET" 2>/dev/null && pwd || echo "$TARGET")"
-  echo ""
-  echo "Select installation scope:"
-  echo "   1) Global — user-level (~/.claude, ~/.gemini, ~/.cursor, etc.), available across all projects"
-  echo "   2) Local  — project-level ($abs_target)"
-  echo ""
+  read -r height width < <(stty size < /dev/tty)
+  printf '\n\033[1msdd-flow · Installation\033[0m\n\033[1mSelect installation scope:\033[0m\n' > /dev/tty
+  for line in '1) Global — user-level, available across all projects' "2) Local — project-level ($abs_target)"; do
+    while IFS= read -r line; do
+      printf '\033[1;36m%s\033[0m\n' "$line" > /dev/tty
+    done < <(wizard_wrap "$line" "$((width - 1))")
+  done
+  printf '\n' > /dev/tty
   while true; do
-    printf "Enter scope [1=global, 2=local] (default: 1): " > /dev/tty
+    printf '\033[1mEnter scope [1=global, 2=local] (default: 1):\033[0m ' > /dev/tty
     read -r choice < /dev/tty || exit 1
     case "${choice:-1}" in
       1|g|global|Global|GLOBAL)
