@@ -60,39 +60,57 @@ Workspace:  .spec/<feature-slug>/{scope,design,tasks/,verify}.md   +   local git
 
 ## Install
 
-### Claude Code
+### Interactive Wizard (All Clients — Local or Global)
+
+Run the installer with **no flags** to launch the interactive wizard. It asks for **local**
+(current project) or **global** (machine-wide) scope, then lists every supported client
+(`claude`, `gemini`, `codex`, `opencode`, `kilo`, `cursor`, `windsurf`, `antigravity`, `copilot`,
+plus `universal`) unchecked, grouping the ones that share a skills directory, so you pick exactly
+which to install:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.sh | bash
+```
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.ps1 -OutFile install.ps1
+.\install.ps1
+```
+
+**Non-interactive CLI flags:**
+
+```bash
+# Specific client(s), local or global
+curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.sh \
+  | bash -s -- --client <claude|gemini|codex|opencode|kilo|cursor|windsurf|antigravity|copilot|universal> --global
 
 ```
+
+Per-client install locations, subagent adapters, and uninstall details → **[INSTALL.md](./INSTALL.md)**.
+
+### Native Plugin / Extension Alternatives
+
+#### Claude Code
+
+```text
 /plugin marketplace add nushey/sdd-flow
 /plugin install sdd-flow@sdd-flow
 ```
 
-Restart Claude Code. The `sdd` skill and five subagents register automatically — "registration"
-means the plugin loader indexes `skills/` and `agents/` from the installed plugin directory; there
-is no separate config file to edit.
-
-### Gemini CLI
+#### Gemini CLI
 
 ```bash
 gemini extensions install https://github.com/nushey/sdd-flow
 ```
 
-*(Or point to a local checkout: `gemini extensions install ./sdd-flow`)*
-
-### Any other client (Codex, Opencode, Kilo, Cursor, Windsurf/Devin Desktop, Antigravity)
-
-sdd-flow is harness-neutral Agent Skills — any client that reads `.agents/skills/` picks it up
-with **one command**:
+#### OpenAI Codex
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.sh \
-  | bash -s -- --client <codex|opencode|kilo|cursor|windsurf|antigravity>
+codex plugin marketplace add nushey/sdd-flow
+codex plugin add sdd-flow
 ```
-
-Windows: `scripts/install.ps1 -Client <client>`. Per-client install locations, native
-alternatives, and limitations → **[INSTALL.md](./INSTALL.md)**. Windsurf/Devin Desktop and
-Antigravity installs are **partial**: they receive skills but no role subagents, so `/sdd` and
-`/mini-sdd` stop at the start and say what is missing.
 
 ### Prerequisites (all clients)
 
