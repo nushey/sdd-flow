@@ -25,7 +25,7 @@ The Mini-SDD flow uses exactly **one** subagent (the Developer). Planning runs i
 
 ## Requirements (check before planning)
 
-- The harness can delegate to an isolated subagent AND has the `mini-sdd-developer` role registered (by the name your harness gives it, e.g. `sdd-flow:mini-sdd-developer` for the Claude Code plugin, `mini-sdd-developer` elsewhere). If not, STOP before writing anything and tell the user which requirement is missing — skills-only installs (Antigravity, Windsurf) are partial, see INSTALL.md. Never implement the plan in the Orchestrator instead.
+- The harness can delegate to an isolated subagent AND has the `mini-sdd-developer` role registered (by the name your harness gives it, e.g. `sdd-flow:mini-sdd-developer` for the Claude Code plugin, `mini-sdd-developer` elsewhere). If not, STOP before writing anything and tell the user which requirement is missing — skills-only `universal` installs do not register role subagents, see INSTALL.md. Never implement the plan in the Orchestrator instead.
 - The project is a git repository — the developer commits every task. If not, STOP before writing anything.
 
 ## When to use Mini-SDD

@@ -1,73 +1,379 @@
 #!/usr/bin/env bash
-# install.sh — install sdd-flow into any supported agentic client.
-#
-# sdd-flow is an Agent Skills + subagents pack (agentskills.io), NOT an MCP
-# server. This script copies the 5 skills into the client's skill directory and
-# the 5 subagent prompts into the client's agent directory, in the right shape.
-#
-# Usage:
-#   scripts/install.sh --client <codex|opencode|kilo|cursor|windsurf|antigravity> \
-#                      [--target <dir> | --global] [--source <path|url>] [--force]
-#
-#   # One-liner from anywhere (clones sdd-flow to a cache):
-#   curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.sh \
-#     | bash -s -- --client codex
-#
-#   # Or run from a local clone (auto-detected, no network):
-#   git clone https://github.com/nushey/sdd-flow && sdd-flow/scripts/install.sh --client kilo
-#
-# Flags:
-#   --client  (required) target client.
-#   --target  project root to install into (default: current directory). Ignored with --global.
-#   --global  install to the client's user-level (all-projects) directory instead of
-#             a project. Only copies pieces with a confirmed global path for that
-#             client — anything unconfirmed is skipped with a printed note, never
-#             guessed.
-#   --source  local sdd-flow checkout, or a git URL (default: auto-detect local
-#             repo, else clone https://github.com/nushey/sdd-flow).
-#   --force   replace existing files/folders whose names collide with the pack but
-#             that sdd-flow did not install (by default the install stops and lists them).
-#   --help    show this help.
 
 set -euo pipefail
 
 REPO_URL="https://github.com/nushey/sdd-flow.git"
 CACHE="${SDD_FLOW_CACHE:-$HOME/.cache/sdd-flow}"
-CLIENTS="codex opencode kilo cursor windsurf antigravity"
+CLIENTS_FULL=(claude gemini codex opencode kilo cursor windsurf antigravity copilot)
+CLIENTS_ALL=(claude gemini codex opencode kilo cursor windsurf antigravity copilot universal)
 MANIFEST=".sdd-flow-manifest"
 
-CLIENT=""
+RAW_CLIENTS=()
+SELECTED_CLIENTS=()
 TARGET="."
 ARG_SOURCE=""
 GLOBAL=0
-FORCE=0
+LOCAL_FLAG=0
+TARGET_SET=0
 
 usage() {
-  sed -n '3,30p' "$0" | sed 's/^# \{0,1\}//'
+  cat <<'EOF'
+install.sh — install sdd-flow into any supported agentic client.
+
+sdd-flow is an Agent Skills + subagents pack (agentskills.io), NOT an MCP
+server. This script copies the 7 skills into the client's skill directory and
+the 5 subagent prompts into the client's agent directory, in the right shape.
+
+Usage:
+  scripts/install.sh [--client <client[,client...]|all>]
+                     [--global | --local] [--target <dir>]
+                     [--source <path|url>]
+
+  # Interactive wizard (select client and global/local scope):
+  curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.sh | bash
+
+  # Direct non-interactive install:
+  curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.sh \
+    | bash -s -- --client claude --global
+
+Supported clients:
+  claude       Claude Code (.claude/skills + .claude/agents)
+  gemini       Gemini CLI (.agents/skills or ~/.gemini/skills + .gemini/agents)
+  codex        OpenAI Codex (.agents/skills + .codex/agents/*.toml)
+  opencode     OpenCode (.agents/skills or ~/.config/opencode/skills + agents)
+  kilo         Kilo Code (.agents/skills or ~/.kilo/skills + .kilo/agents)
+  cursor       Cursor (.agents/skills or ~/.cursor/skills + .cursor/agents)
+  windsurf     Windsurf / Devin Desktop (.devin skills/agents/rules + .windsurfrules)
+  antigravity  Google Antigravity (.agents/skills & agents or ~/.gemini/config)
+  copilot      GitHub Copilot (.github/skills + .github/agents)
+  universal    Universal skills-only (.agents/skills or ~/.agents/skills)
+  all          All 9 full clients above
+
+Flags:
+  --client, -c  Target client(s), comma-separated, or 'all'.
+                If omitted, an interactive wizard opens.
+  --global, -g  Install to the client's user-level directory (~/) for all projects.
+  --local,  -l  Install to the project root (default: current directory).
+  --target, -t  Project root to install into (ignored with --global).
+  --source      Local sdd-flow checkout or git URL.
+  --help,   -h  Show this help.
+EOF
   exit "${1:-0}"
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --client)  CLIENT="$2"; shift 2;;
-    --target)  TARGET="$2"; shift 2;;
-    --global)  GLOBAL=1; shift;;
-    --source)  ARG_SOURCE="$2"; shift 2;;
-    --force)   FORCE=1; shift;;
-    --help|-h) usage 0;;
+    --client|-c) RAW_CLIENTS+=("$2"); shift 2;;
+    --target|-t) TARGET="$2"; TARGET_SET=1; shift 2;;
+    --global|-g) GLOBAL=1; shift;;
+    --local|-l)  LOCAL_FLAG=1; shift;;
+    --source)    ARG_SOURCE="$2"; shift 2;;
+    --help|-h)   usage 0;;
     *) echo "error: unknown argument: $1" >&2; usage 1;;
   esac
 done
 
-[[ -n "$CLIENT" ]] || { echo "error: --client is required (one of: $CLIENTS)" >&2; usage 1; }
-# shellcheck disable=SC2086
-case " $CLIENTS " in *" $CLIENT "*) ;; *) echo "error: unknown client '$CLIENT' (one of: $CLIENTS)" >&2; exit 1;; esac
+if [[ "$GLOBAL" -eq 1 && "$LOCAL_FLAG" -eq 1 ]]; then
+  echo "error: --global and --local cannot be used together" >&2
+  exit 1
+fi
 
 command -v git >/dev/null 2>&1 || { echo "error: git is required" >&2; exit 1; }
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -n "${BASH_SOURCE[0]:-}" && -f "${BASH_SOURCE[0]}" ]]; then
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+else
+  SCRIPT_DIR="$PWD"
+fi
 
-#--- source resolution -------------------------------------------------------
+claude_home() { echo "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"; }
+codex_home()  { echo "${CODEX_HOME:-$HOME/.codex}"; }
+config_home() { echo "${XDG_CONFIG_HOME:-$HOME/.config}"; }
+
+client_label() {
+  case "$1" in
+    claude)      echo "Claude Code";;
+    gemini)      echo "Gemini CLI";;
+    codex)       echo "OpenAI Codex";;
+    opencode)    echo "OpenCode";;
+    kilo)        echo "Kilo Code";;
+    cursor)      echo "Cursor";;
+    windsurf)    echo "Windsurf / Devin Desktop";;
+    antigravity) echo "Google Antigravity";;
+    copilot)     echo "GitHub Copilot";;
+    universal)   echo "Universal (skills only)";;
+  esac
+}
+
+is_client_detected() {
+  case "$1" in
+    claude)
+      [[ -d "$(claude_home)" ]] || command -v claude >/dev/null 2>&1;;
+    gemini)
+      command -v gemini >/dev/null 2>&1 || [[ -d "$HOME/.gemini/extensions" || -d "$HOME/.gemini/skills" || -f "$HOME/.gemini/settings.json" ]];;
+    codex)
+      [[ -d "$(codex_home)" || -d "/etc/codex" ]] || command -v codex >/dev/null 2>&1;;
+    opencode)
+      [[ -d "$(config_home)/opencode" ]] || command -v opencode >/dev/null 2>&1;;
+    kilo)
+      [[ -d "$HOME/.kilo" || -d "$HOME/.kilocode" || -d "$(config_home)/kilo" ]] || command -v kilo >/dev/null 2>&1;;
+    cursor)
+      [[ -d "$HOME/.cursor" ]] || command -v cursor >/dev/null 2>&1;;
+    windsurf)
+      [[ -d "$(config_home)/devin" || -d "$HOME/.codeium/windsurf" || -d "$HOME/.windsurf" || -d "$HOME/.devin" ]] \
+        || command -v windsurf >/dev/null 2>&1 || command -v devin >/dev/null 2>&1;;
+    antigravity)
+      [[ -d "$HOME/.gemini/antigravity" || -d "$HOME/.gemini/antigravity-cli" || -d "$HOME/.gemini/config" ]] \
+        || command -v agy >/dev/null 2>&1;;
+    copilot)
+      [[ -d "$HOME/.copilot" ]] || command -v copilot >/dev/null 2>&1;;
+    *)
+      return 1;;
+  esac
+}
+
+normalize_client() {
+  case "$1" in
+    claude|claude-code)     echo "claude";;
+    gemini|gemini-cli)      echo "gemini";;
+    codex)                  echo "codex";;
+    opencode)               echo "opencode";;
+    kilo|kilocode)          echo "kilo";;
+    cursor)                 echo "cursor";;
+    windsurf|devin)         echo "windsurf";;
+    antigravity|agy)        echo "antigravity";;
+    copilot|github-copilot) echo "copilot";;
+    universal)              echo "universal";;
+    all)                    echo "all";;
+    *)                      return 1;;
+  esac
+}
+
+contains() {
+  local needle="$1" item
+  shift
+  for item in "$@"; do
+    [[ "$item" == "$needle" ]] && return 0
+  done
+  return 1
+}
+
+add_selected_client() {
+  contains "$1" "${SELECTED_CLIENTS[@]+"${SELECTED_CLIENTS[@]}"}" || SELECTED_CLIENTS+=("$1")
+}
+
+has_plugin_install() {
+  case "$1" in
+    claude) grep -Fqs '"sdd-flow@sdd-flow"' "$(claude_home)/plugins/installed_plugins.json";;
+    codex)  grep -Fqs '[plugins."sdd-flow@sdd-flow"]' "$(codex_home)/config.toml";;
+    *)      return 1;;
+  esac
+}
+
+expand_client_token() {
+  local raw="$1" norm c
+  norm="$(normalize_client "$raw")" || {
+    echo "error: unknown client '$raw' (expected one of: ${CLIENTS_ALL[*]} all)" >&2
+    exit 1
+  }
+  case "$norm" in
+    all)
+      for c in "${CLIENTS_FULL[@]}"; do add_selected_client "$c"; done;;
+    *)
+      add_selected_client "$norm";;
+  esac
+}
+
+parse_raw_clients() {
+  local entry token tokens
+  for entry in "${RAW_CLIENTS[@]}"; do
+    IFS=', ' read -r -a tokens <<< "$entry"
+    for token in "${tokens[@]}"; do
+      [[ -z "$token" ]] || expand_client_token "$token"
+    done
+  done
+}
+
+can_prompt() {
+  (: < /dev/tty) 2>/dev/null
+}
+
+skills_dir() {
+  if [[ "$GLOBAL" -eq 1 ]]; then
+    case "$1" in
+      claude)          echo "$(claude_home)/skills";;
+      gemini)          echo "$HOME/.gemini/skills";;
+      codex|universal) echo "$HOME/.agents/skills";;
+      opencode)        echo "$(config_home)/opencode/skills";;
+      kilo)            echo "$HOME/.kilo/skills";;
+      cursor)          echo "$HOME/.cursor/skills";;
+      windsurf)        echo "$(config_home)/devin/skills";;
+      antigravity)     echo "$HOME/.gemini/config/skills";;
+      copilot)         echo "$HOME/.copilot/skills";;
+    esac
+  else
+    case "$1" in
+      claude)   echo ".claude/skills";;
+      windsurf) echo ".devin/skills";;
+      copilot)  echo ".github/skills";;
+      *)        echo ".agents/skills";;
+    esac
+  fi
+}
+
+wizard_select_clients() {
+  local i r c dir n key rest line cursor=-1 drawn=0 message="" tilde='~'
+  local dirs=() shared=() row_kinds=() row_values=() checked=() hints=() badges=() plugins=()
+  for i in "${!CLIENTS_ALL[@]}"; do
+    dirs+=("$(skills_dir "${CLIENTS_ALL[$i]}")")
+    checked+=(0)
+    badges+=("$(is_client_detected "${CLIENTS_ALL[$i]}" && printf ' [detected]' || true)")
+    if has_plugin_install "${CLIENTS_ALL[$i]}"; then
+      plugins+=(1)
+      badges[$i]+=" [plugin installed]"
+    else
+      plugins+=(0)
+    fi
+  done
+  for i in "${!dirs[@]}"; do
+    n=0
+    for dir in "${dirs[@]}"; do
+      [[ "$dir" == "${dirs[$i]}" ]] && n=$((n + 1))
+    done
+    if [[ "$n" -gt 1 ]] && ! contains "${dirs[$i]}" "${shared[@]+"${shared[@]}"}"; then
+      shared+=("${dirs[$i]}")
+    fi
+  done
+  for dir in "${shared[@]+"${shared[@]}"}"; do
+    row_kinds+=(h)
+    row_values+=("── ${dir/#"$HOME"/$tilde} ── shared, installed together")
+    for i in "${!dirs[@]}"; do
+      [[ "${dirs[$i]}" == "$dir" ]] || continue
+      row_kinds+=(c)
+      row_values+=("$i")
+    done
+  done
+  row_kinds+=(h)
+  row_values+=("── Own directory ──")
+  for i in "${!dirs[@]}"; do
+    contains "${dirs[$i]}" "${shared[@]+"${shared[@]}"}" && continue
+    row_kinds+=(c)
+    row_values+=("$i")
+  done
+  for i in "${!dirs[@]}"; do
+    if contains "${dirs[$i]}" "${shared[@]+"${shared[@]}"}"; then
+      hints[$i]=""
+    else
+      hints[$i]=" (${dirs[$i]/#"$HOME"/$tilde})"
+    fi
+  done
+  for r in "${!row_kinds[@]}"; do
+    if [[ "${row_kinds[$r]}" == "c" ]]; then
+      cursor="$r"
+      break
+    fi
+  done
+
+  echo "" > /dev/tty
+  while true; do
+    [[ "$drawn" -gt 0 ]] && printf '\033[%dA\033[J' "$drawn" > /dev/tty
+    drawn=0
+    {
+      echo "Select client(s) to install (↑↓ move, space select, enter confirm):"
+      drawn=$((drawn + 1))
+      for r in "${!row_kinds[@]}"; do
+        if [[ "${row_kinds[$r]}" == "h" ]]; then
+          echo "${row_values[$r]}"
+        else
+          i="${row_values[$r]}"
+          c="${CLIENTS_ALL[$i]}"
+          line="$( [[ "$r" -eq "$cursor" ]] && printf '>' || printf ' ')"
+          line+=" $( [[ "${checked[$i]}" -eq 1 ]] && printf '[x]' || printf '[ ]')"
+          line+="$(printf ' %-12s %s' "$c" "$(client_label "$c")")${hints[$i]}${badges[$i]}"
+          if [[ "${plugins[$i]}" -eq 1 ]]; then
+            printf '\033[31m%s\033[0m\n' "$line"
+          else
+            echo "$line"
+          fi
+        fi
+        drawn=$((drawn + 1))
+      done
+      echo "$message"
+      drawn=$((drawn + 1))
+    } > /dev/tty
+    message=""
+    IFS= read -rsn1 key < /dev/tty || exit 1
+    case "$key" in
+      $'\033')
+        IFS= read -rsn2 rest < /dev/tty || true
+        case "$rest" in
+          '[A')
+            for ((r = cursor - 1; r >= 0; r--)); do
+              [[ "${row_kinds[$r]}" == "c" ]] && { cursor="$r"; break; }
+            done;;
+          '[B')
+            for ((r = cursor + 1; r < ${#row_kinds[@]}; r++)); do
+              [[ "${row_kinds[$r]}" == "c" ]] && { cursor="$r"; break; }
+            done;;
+        esac;;
+      ' ')
+        i="${row_values[$cursor]}"
+        checked[$i]=$((1 - checked[$i]));;
+      '')
+        for i in "${!CLIENTS_ALL[@]}"; do
+          [[ "${checked[$i]}" -eq 1 ]] && add_selected_client "${CLIENTS_ALL[$i]}"
+        done
+        if [[ "${#SELECTED_CLIENTS[@]}" -gt 0 ]]; then
+          echo "Selected: ${SELECTED_CLIENTS[*]}" > /dev/tty
+          return
+        fi
+        message="  select at least one client";;
+    esac
+  done
+}
+
+wizard_select_scope() {
+  local choice abs_target
+  abs_target="$(cd "$TARGET" 2>/dev/null && pwd || echo "$TARGET")"
+  echo ""
+  echo "Select installation scope:"
+  echo "   1) Global — user-level (~/.claude, ~/.gemini, ~/.cursor, etc.), available across all projects"
+  echo "   2) Local  — project-level ($abs_target)"
+  echo ""
+  while true; do
+    printf "Enter scope [1=global, 2=local] (default: 1): " > /dev/tty
+    read -r choice < /dev/tty || exit 1
+    case "${choice:-1}" in
+      1|g|global|Global|GLOBAL)
+        GLOBAL=1
+        break;;
+      2|l|local|Local|LOCAL)
+        GLOBAL=0
+        LOCAL_FLAG=1
+        break;;
+      *)
+        echo "  please enter 1 (global) or 2 (local)." > /dev/tty;;
+    esac
+  done
+}
+
+if [[ "$GLOBAL" -eq 0 && "$LOCAL_FLAG" -eq 0 && "$TARGET_SET" -eq 0 ]]; then
+  if can_prompt; then
+    wizard_select_scope
+  fi
+fi
+
+if [[ "${#RAW_CLIENTS[@]}" -gt 0 ]]; then
+  parse_raw_clients
+else
+  if can_prompt; then
+    wizard_select_clients
+  else
+    echo "error: --client is required in non-interactive mode (one of: ${CLIENTS_ALL[*]} all)" >&2
+    usage 1
+  fi
+fi
+
 resolve_source() {
   if [[ -n "$ARG_SOURCE" ]]; then
     if [[ "$ARG_SOURCE" =~ ^https?:// || "$ARG_SOURCE" =~ ^git@ ]]; then
@@ -78,7 +384,6 @@ resolve_source() {
     fi
     return
   fi
-  # Auto-detect: are we running from inside the sdd-flow repo?
   local repo_local="$SCRIPT_DIR/.."
   if [[ -d "$repo_local/skills" && -d "$repo_local/agents" ]]; then
     SRC="$(cd "$repo_local" && pwd)"
@@ -115,22 +420,18 @@ clone_or_update() {
   fi
 }
 
-#--- install plan --------------------------------------------------------------
-# Every pack item is queued as (source, destination) first, checked for
-# collisions, and only then copied. Destinations installed by sdd-flow are
-# recorded by name in a .sdd-flow-manifest file next to them.
 PLAN_SRC=()
 PLAN_DEST=()
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
 
 queue() {
+  contains "$2" "${PLAN_DEST[@]+"${PLAN_DEST[@]}"}" && return 0
   PLAN_SRC+=("$1")
   PLAN_DEST+=("$2")
 }
 
 queue_skills() {
-  # $1 = source root, $2 = target skill dir (e.g. <target>/.agents/skills)
   local d
   for d in "$1"/skills/*/; do
     [[ -d "$d" ]] || continue
@@ -139,7 +440,6 @@ queue_skills() {
 }
 
 queue_files() {
-  # $1 = source dir, $2 = extension, $3 = destination dir
   local f
   for f in "$1"/*."$2"; do
     [[ -f "$f" ]] || continue
@@ -148,7 +448,6 @@ queue_files() {
 }
 
 queue_opencode_agents() {
-  # Insert `mode: subagent` after the opening frontmatter delimiter.
   local f base
   mkdir -p "$STAGE/opencode"
   for f in "$1"/agents/*.md; do
@@ -156,6 +455,26 @@ queue_opencode_agents() {
     base="$(basename "$f")"
     awk 'NR==1 && /^---[[:space:]]*$/ {print; print "mode: subagent"; next} {print}' "$f" > "$STAGE/opencode/$base"
     queue "$STAGE/opencode/$base" "$2/$base"
+  done
+}
+
+queue_antigravity_agents() {
+  local f base
+  mkdir -p "$STAGE/antigravity"
+  for f in "$1"/agents/*.md; do
+    [[ -f "$f" ]] || continue
+    base="$(basename "$f")"
+    awk 'NR==1 && /^---[[:space:]]*$/ {print; print "mainAgent: false"; next} {print}' "$f" > "$STAGE/antigravity/$base"
+    queue "$STAGE/antigravity/$base" "$2/$base"
+  done
+}
+
+queue_copilot_agents() {
+  local f base
+  for f in "$1"/agents/*.md; do
+    [[ -f "$f" ]] || continue
+    base="$(basename "$f" .md)"
+    queue "$f" "$2/$base.agent.md"
   done
 }
 
@@ -179,7 +498,7 @@ record() {
   owned "$1" || echo "$(basename "$1")" >> "$manifest"
 }
 
-check_collisions() {
+report_collisions() {
   local i dest conflicts=0
   for i in "${!PLAN_DEST[@]}"; do
     dest="${PLAN_DEST[$i]}"
@@ -187,15 +506,10 @@ check_collisions() {
     if owned "$dest" || same_content "${PLAN_SRC[$i]}" "$dest"; then
       continue
     fi
-    [[ "$conflicts" -eq 0 ]] && echo "error: these paths exist, differ from sdd-flow and were not installed by it:" >&2
+    [[ "$conflicts" -eq 0 ]] && echo "warning: replacing these paths, which differ from sdd-flow and were not installed by it:" >&2
     echo "  $dest" >&2
     conflicts=$((conflicts + 1))
   done
-  if [[ "$conflicts" -gt 0 ]]; then
-    [[ "$FORCE" -eq 1 ]] && { echo "  --force: replacing them." >&2; return; }
-    echo "Nothing was installed. Move them away, or re-run with --force to replace them." >&2
-    exit 1
-  fi
 }
 
 apply_plan() {
@@ -215,78 +529,95 @@ apply_plan() {
   done
 }
 
-#--- per-client plan -----------------------------------------------------------
-plan_project() {
-  local src="$1" t="$2"
-  queue_skills "$src" "$t/.agents/skills"
-  case "$CLIENT" in
-    codex)    queue_files "$src/integrations/codex/agents" toml "$t/.codex/agents";;
-    opencode) queue_opencode_agents "$src" "$t/.opencode/agents";;
-    kilo)     queue_files "$src/agents" md "$t/.kilo/agent";;
-    cursor)   queue_files "$src/agents" md "$t/.cursor/agents";;
+plan_project_client() {
+  local src="$1" t="$2" client="$3"
+  queue_skills "$src" "$t/$(skills_dir "$client")"
+  case "$client" in
+    claude)
+      queue_files "$src/agents" md "$t/.claude/agents";;
+    gemini)
+      queue_files "$src/agents" md "$t/.gemini/agents";;
+    codex)
+      queue_files "$src/integrations/codex/agents" toml "$t/.codex/agents";;
+    opencode)
+      queue_opencode_agents "$src" "$t/.opencode/agents";;
+    kilo)
+      queue_opencode_agents "$src" "$t/.kilo/agents";;
+    cursor)
+      queue_files "$src/agents" md "$t/.cursor/agents";;
     windsurf)
+      queue_files "$src/agents" md "$t/.devin/agents"
       queue "$src/integrations/windsurf/windsurfrules" "$t/.devin/rules/sdd.md"
-      # Legacy single-file for pre-rebrand Windsurf.
       queue "$src/integrations/windsurf/windsurfrules" "$t/.windsurfrules";;
-    antigravity) ;;
+    antigravity)
+      queue_antigravity_agents "$src" "$t/.agents/agents";;
+    copilot)
+      queue_copilot_agents "$src" "$t/.github/agents";;
+    universal) ;;
   esac
 }
 
-# Only confirmed global directories are used here. A client with no confirmed
-# global path for a piece prints a skip note instead of guessing — install
-# per-project for that piece with the default (non --global) command.
-plan_global() {
-  local src="$1"
-  case "$CLIENT" in
+plan_global_client() {
+  local src="$1" client="$2"
+  queue_skills "$src" "$(skills_dir "$client")"
+  case "$client" in
+    claude)
+      queue_files "$src/agents" md "$(claude_home)/agents";;
+    gemini)
+      queue_files "$src/agents" md "$HOME/.gemini/agents";;
     codex)
-      queue_skills "$src" "$HOME/.agents/skills"
-      queue_files "$src/integrations/codex/agents" toml "$HOME/.codex/agents";;
+      queue_files "$src/integrations/codex/agents" toml "$(codex_home)/agents";;
     opencode)
-      queue_skills "$src" "$HOME/.config/opencode/skills"
-      queue_opencode_agents "$src" "$HOME/.config/opencode/agents";;
+      queue_opencode_agents "$src" "$(config_home)/opencode/agents";;
     kilo)
-      queue_skills "$src" "$HOME/.kilo/skills"
-      queue_files "$src/agents" md "$HOME/.kilo/agent";;
+      queue_opencode_agents "$src" "$(config_home)/kilo/agents";;
     cursor)
-      queue_skills "$src" "$HOME/.cursor/skills"
       queue_files "$src/agents" md "$HOME/.cursor/agents";;
     windsurf)
-      queue_skills "$src" "$HOME/.codeium/windsurf/skills"
-      echo "  skip:   global rules — no confirmed user-level rules directory for Windsurf/Devin Desktop."
-      echo "          Install rules per-project: scripts/install.sh --client windsurf --target <dir>";;
+      queue_files "$src/agents" md "$(config_home)/devin/agents";;
     antigravity)
-      queue_skills "$src" "$HOME/.gemini/config/skills";;
+      queue_skills "$src" "$HOME/.gemini/antigravity-cli/skills"
+      queue_antigravity_agents "$src" "$HOME/.gemini/config/agents";;
+    copilot)
+      queue_copilot_agents "$src" "$HOME/.copilot/agents";;
+    universal) ;;
   esac
 }
 
 invoke_hint() {
   case "$1" in
-    codex)       echo "  - Type /skills or use the agent to load the 'sdd' skill; run /sdd <feature>.";;
-    opencode)    echo "  - The agent auto-loads the 'sdd' skill; say '/sdd <feature>' or '@sdd-developer ...'.";;
-    kilo)        echo "  - Use the 'sdd' skill; say '/sdd <feature>'.";;
-    cursor)      echo "  - Type /sdd or let the agent load the 'sdd' skill by asking to 'spec this'.";;
-    windsurf)    echo "  - Partial install: no role subagents are installed for this client, so /sdd and"
-                 echo "    /mini-sdd stop before writing artifacts unless the roles are available. See INSTALL.md.";;
-    antigravity) echo "  - Partial install: skills only. /sdd and /mini-sdd require subagent delegation and"
-                 echo "    stop before writing artifacts on this client. See INSTALL.md.";;
+    claude)      echo "  - [claude]      Run /sdd <feature> or /mini-sdd <change> in Claude Code.";;
+    gemini)      echo "  - [gemini]      Run /sdd <feature> or ask Gemini CLI to load the 'sdd' skill.";;
+    codex)       echo "  - [codex]       Type /skills or \$sdd to load the orchestrator; run /sdd <feature>.";;
+    opencode)    echo "  - [opencode]    Say '/sdd <feature>' or '@sdd-developer ...'.";;
+    kilo)        echo "  - [kilo]        Use the 'sdd' skill; say '/sdd <feature>'.";;
+    cursor)      echo "  - [cursor]      Type /sdd or ask the agent to 'spec this'.";;
+    windsurf)    echo "  - [windsurf]    Say '/sdd <feature>' or '/mini-sdd <change>' in Devin Desktop / Windsurf.";;
+    antigravity) echo "  - [antigravity] Type /sdd <feature> or ask the agent to use the 'sdd' skill.";;
+    copilot)     echo "  - [copilot]     Ask Copilot to run /sdd <feature> (ensure runSubagent is enabled).";;
+    universal)   echo "  - [universal]   Skills-only install. sharp-me, sdd-plan, sdd-implement, sdd-review and pr-creation"
+                 echo "                  work without role subagents; /sdd and /mini-sdd require them.";;
   esac
 }
 
-#--- main --------------------------------------------------------------------
 resolve_source
 SRC="$(cd "$SRC" && pwd)"
 
 [[ -d "$SRC/skills" && -d "$SRC/agents" ]] || { echo "error: source has no skills/ and agents/ ($SRC)" >&2; exit 1; }
 
+CLIENT_LIST="${SELECTED_CLIENTS[*]}"
+
 if [[ "$GLOBAL" -eq 1 ]]; then
-  echo "Installing sdd-flow for '$CLIENT' (global, user-level)"
+  echo "Installing sdd-flow for: $CLIENT_LIST (global, user-level)"
   echo "  source: $SRC"
-  plan_global "$SRC"
-  check_collisions
+  for c in "${SELECTED_CLIENTS[@]}"; do
+    plan_global_client "$SRC" "$c"
+  done
+  report_collisions
   apply_plan
   cat <<EOF
 
-Done. sdd-flow is installed for $CLIENT (global — applies to every project on this machine).
+Done. sdd-flow is installed for: $CLIENT_LIST (global — applies to every project on this machine).
 
 Before you start:
   - Every project you use sdd-flow in still needs its own AGENTS.md at the root
@@ -296,22 +627,26 @@ Before you start:
     checker needs Python 3.11+ (python3). No remote or GitHub CLI is required.
 
 Invoke:
-$(invoke_hint "$CLIENT")
-
-Re-run this command any time to refresh skills/agents.
 EOF
+  for c in "${SELECTED_CLIENTS[@]}"; do
+    invoke_hint "$c"
+  done
+  echo ""
+  echo "Re-run this command any time to refresh skills/agents."
 else
   mkdir -p "$TARGET"
   TARGET="$(cd "$TARGET" && pwd)"
-  echo "Installing sdd-flow for '$CLIENT'"
+  echo "Installing sdd-flow for: $CLIENT_LIST (local project)"
   echo "  source: $SRC"
   echo "  target: $TARGET"
-  plan_project "$SRC" "$TARGET"
-  check_collisions
+  for c in "${SELECTED_CLIENTS[@]}"; do
+    plan_project_client "$SRC" "$TARGET" "$c"
+  done
+  report_collisions
   apply_plan
   cat <<EOF
 
-Done. sdd-flow is installed for $CLIENT.
+Done. sdd-flow is installed for: $CLIENT_LIST.
 
 Before you start:
   - Make sure your project has an AGENTS.md at the root (user-provided; SDD never creates it).
@@ -319,8 +654,10 @@ Before you start:
     checker needs Python 3.11+ (python3). No remote or GitHub CLI is required.
 
 Invoke:
-$(invoke_hint "$CLIENT")
-
-Re-run this command any time to refresh skills/agents.
 EOF
+  for c in "${SELECTED_CLIENTS[@]}"; do
+    invoke_hint "$c"
+  done
+  echo ""
+  echo "Re-run this command any time to refresh skills/agents."
 fi

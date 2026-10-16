@@ -18,7 +18,7 @@ When this skill activates, YOU are the Orchestrator. You never write production 
 
 SDD's value is **context isolation**. Each phase MUST run in a separate subagent context — if the Orchestrator does the work itself, SDD collapses to a monolithic prompt.
 
-**Capability precondition (check before writing anything):** your harness must be able to delegate to isolated subagents AND have the roles `sdd-init`, `sdd-tech-lead`, `sdd-developer`, and `sdd-verifier` registered. If either is missing, STOP before creating a branch or any `.spec/` file and tell the user which requirement is missing (skills-only installs such as Antigravity or Windsurf are partial — see INSTALL.md). Never run the phases in your own context instead, and never fetch role prompts from another source.
+**Capability precondition (check before writing anything):** your harness must be able to delegate to isolated subagents AND have the roles `sdd-init`, `sdd-tech-lead`, `sdd-developer`, and `sdd-verifier` registered. If either is missing, STOP before creating a branch or any `.spec/` file and tell the user which requirement is missing (skills-only `universal` installs do not register role subagents — see INSTALL.md). Never run the phases in your own context instead, and never fetch role prompts from another source.
 
 **Hard rules for the Orchestrator:**
 
