@@ -21,7 +21,7 @@ usage() {
 install.sh — install sdd-flow into any supported agentic client.
 
 sdd-flow is an Agent Skills + subagents pack (agentskills.io), NOT an MCP
-server. This script copies the 7 skills into the client's skill directory and
+server. This script copies the 8 skills into the client's skill directory and
 the 5 subagent prompts into the client's agent directory, in the right shape.
 
 Usage:
@@ -696,7 +696,7 @@ invoke_hint() {
     windsurf)    echo "  - [windsurf]    Say '/sdd <feature>' or '/mini-sdd <change>' in Devin Desktop / Windsurf.";;
     antigravity) echo "  - [antigravity] Type /sdd <feature> or ask the agent to use the 'sdd' skill.";;
     copilot)     echo "  - [copilot]     Ask Copilot to run /sdd <feature> (ensure runSubagent is enabled).";;
-    universal)   echo "  - [universal]   Skills-only install. sharp-me, sdd-plan, sdd-implement, sdd-review and pr-creation"
+    universal)   echo "  - [universal]   Skills-only install. sharp-me, sdd-plan, sdd-debug, sdd-implement, sdd-review and pr-creation"
                  echo "                  work without role subagents; /sdd and /mini-sdd require them.";;
   esac
 }

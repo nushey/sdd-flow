@@ -5,7 +5,8 @@ description: >
   ambiguities and technical decisions with the user. Use when the user asks
   to execute a plan from a file or the conversation. Supports the current
   session or an isolated subagent, keeps cumulative execution history, and
-  never commits. Planning and refinement belong to sdd-plan and sharp-me.
+  never commits. Planning, debugging, and refinement belong to sdd-plan,
+  sdd-debug, and sharp-me.
 ---
 
 # sdd-implement

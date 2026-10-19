@@ -4,7 +4,7 @@
 > (preferred) and `.windsurfrules` (legacy fallback).
 >
 > sdd-flow is an Agent Skills + subagents pack, **not** an MCP server. The
-> installer places the 7 skills under `.devin/skills/` (or `~/.config/devin/skills/`
+> installer places the 8 skills under `.devin/skills/` (or `~/.config/devin/skills/`
 > globally) and the 5 role subagents under `.devin/agents/`
 > (or `~/.config/devin/agents/` globally).
 
@@ -58,7 +58,7 @@ implementation on a clean context.
 
 The installer places the 5 role subagents (`sdd-init`, `sdd-tech-lead`,
 `sdd-developer`, `sdd-verifier`, `mini-sdd-developer`) in `.devin/agents/`
-(or `~/.config/devin/agents/` globally), and the 7 skills in
+(or `~/.config/devin/agents/` globally), and the 8 skills in
 `.devin/skills/`. Read the full
 orchestrator contracts in `skills/sdd/SKILL.md` and `skills/mini-sdd/SKILL.md`.
 
