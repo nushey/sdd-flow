@@ -1,394 +1,128 @@
 <h1 align="center">sdd-flow</h1>
 
 <p align="center">
-  <strong>Spec-Driven Development orchestration for AI coding agents.</strong><br>
-  <em>Turns a feature prompt into a disciplined init → design+tasks → implement → verify pipeline, enforced by cold-context subagents.</em>
+  <strong>Spec-Driven Development and standalone engineering workflows for AI coding agents.</strong>
 </p>
 
 <p align="center">
-  <code>Agent Skills pack</code> · <a href="https://agentskills.io">agentskills.io</a>-compliant · Python 3.11+ for the local checker · zero MCP server
+  <code>Agent Skills pack</code> · <a href="https://agentskills.io">agentskills.io</a>-compliant · Python 3.11+ for the local checker · zero runtime server
 </p>
 
 <p align="center">
   <a href="#overview">Overview</a> &bull;
-  <a href="#install">Install</a> &bull;
-  <a href="#sdd-lifecycle">SDD Lifecycle</a> &bull;
-  <a href="#skills--subagents">Skills & Subagents</a> &bull;
-  <a href="#configuration--rules-sync">Configuration</a> &bull;
-  <a href="#faq">FAQ</a>
+  <a href="#what-it-provides">What It Provides</a> &bull;
+  <a href="#workflows">Workflows</a> &bull;
+  <a href="#install">Install</a>
 </p>
 
 ---
 
 ## Overview
 
-> **spec-driven development** — no code is written until scope, design, and tasks are confirmed
-> on disk. Every phase is a separate subagent, cold-started, reading only the artifact it needs.
+`sdd-flow` brings structured engineering workflows to coding agents through plain Markdown skills (`skills/<name>/SKILL.md`) and role subagents (`agents/<name>.md`).
 
-An agent that goes straight from prompt to code skips architecture, invents scope as it goes, and
-produces a diff nobody reviewed against a plan. sdd-flow fixes this by turning the SDD lifecycle
-into disk artifacts under `.spec/<feature-slug>/` and a fixed sequence of subagent hand-offs —
-each one starts with **no memory of the conversation**, forcing every decision to be written down
-before the next phase can act on it.
+Instead of jumping straight from a prompt to unreviewed code, it persists specifications and plans under `.spec/` and delegates execution phases to isolated, cold-context subagents. Every agent reads your project's `AGENTS.md` (and `CLAUDE.md` when present) as its source of truth, and every workflow ends locally without pushing, opening PRs, or touching remotes.
 
-sdd-flow is **not** an MCP server and depends on **no external "skills engine."** It ships two
-plain artifact types that any agent harness can read directly off disk:
+---
 
-- **Skills** (`skills/<name>/SKILL.md`) — orchestrator + standards, `agentskills.io`-compliant frontmatter.
-- **Subagent prompts** (`agents/<name>.md`) — the five roles, plain markdown with `name`+`description` frontmatter.
+## What It Provides
 
-There is no process to spawn and nothing running between sessions. The orchestrator, Init, Tech Lead,
-Developer, and Verifier are **prompt roles**, not tool calls.
+### Skills
 
+| Skill | Invocation | Purpose |
+|-------|------------|---------|
+| `sdd` | `/sdd <feature>` | Full SDD orchestrator: triages scope, writes `.spec/<slug>/` artifacts, and delegates each phase to an isolated subagent. |
+| `mini-sdd` | `/mini-sdd <change>` | Lean SDD flow for small changes: plans in the orchestrator (`sdd-plan`) and delegates implementation to one cold-context developer subagent. |
+| `sharp-me` | `/sharp-me <idea or plan>` | Refines an idea or plan through research, focused questions, and tradeoff recommendations; saves `.spec/<plan-name>/plan.md`. |
+| `sdd-plan` | `/sdd-plan <request>` | Writes a proportional implementation plan to `.spec/<plan-name>/plan.md` without modifying code; also serves as Mini-SDD's planner. |
+| `sdd-debug` | `/sdd-debug <issue>` | Investigates a failure in the current session, proves the root cause, maps all affected points across callers and interacting modules, and saves a root-cause fix plan to `.spec/<bug-slug>/plan.md`. |
+| `sdd-implement` | `/sdd-implement <plan>` | Implements all or selected points of any plan in the current session or an isolated subagent, tracking runs in `.spec/<plan-name>/history.md` without creating commits. |
+| `sdd-review` | `/sdd-review <request>` | Delegates code quality review, acceptance compliance review, or both to an isolated reviewer subagent without modifying code. |
+| `pr-creation` | `/pr-creation` | Formats pull request descriptions around user value and essential reviewer context when explicitly requested. |
+
+### Role Subagents
+
+Used by `/sdd` and `/mini-sdd` for cold-context phase isolation:
+
+| Subagent | Role |
+|----------|------|
+| `sdd-init` | Verifies `AGENTS.md` exists and refines `intake.md` into `scope.md` with stable `AC-NNN` acceptance IDs. |
+| `sdd-tech-lead` | Writes `design.md`, `tasks.index.md`, and atomic task files under `tasks/` (or `fixes/` during failure recovery). |
+| `sdd-developer` | Implements one Full SDD task per run, commits with conventional commits, and records the implementation log. |
+| `sdd-verifier` | Validates git history against task logs, runs tests, verifies every `AC-NNN`, and commits spec artifacts locally on pass. |
+| `mini-sdd-developer` | Executes all tasks in a Mini-SDD `plan.md` in a fresh context after loading its declared bootstrap skills and MCP tools. |
+
+---
+
+## Workflows
+
+### Full SDD (`/sdd`)
+
+Designed for larger features and architectural changes:
+
+1. **Triage** — Clarifies scope and reference files; writes `.spec/<slug>/intake.md`.
+2. **Init (`sdd-init`)** — Produces `.spec/<slug>/scope.md` with testable `AC-NNN` criteria.
+3. **Design & Tasks (`sdd-tech-lead`)** — Produces `design.md`, `tasks/<n>-<slug>.md`, and `tasks.index.md`, validated by `sdd check --phase plan`.
+4. **Implement (`sdd-developer`)** — Runs one subagent per task; one task equals one commit.
+5. **Verify (`sdd-verifier`)** — Runs tests and checks the diff against `scope.md` (up to 3 fix cycles via `fixes/`). Commits `.spec/<slug>/` locally on pass.
+
+```text
+.spec/<feature-slug>/
+├── intake.md
+├── scope.md
+├── design.md
+├── tasks.index.md
+├── tasks/<n>-<slug>.md
+├── fixes/<n>-<slug>.md
+└── verify.md
 ```
-Agent (Claude Code · Gemini CLI · Codex · Cursor · Opencode · Kilo · ...)
-    │ reads skills/*/SKILL.md + agents/*.md directly off disk
-    ▼
-sdd skill (Orchestrator) ──delegates──► sdd-init / sdd-tech-lead / sdd-developer / sdd-verifier
-    │                                        (cold-context subagents, one phase each)
-    ▼
-Workspace:  .spec/<feature-slug>/{scope,design,tasks/,verify}.md   +   local git commits
-```
 
-- **Sequential tasks** — one developer at a time, one commit per task.
-- **Local closure** — both flows end after local verification. No role pushes, opens PRs, merges, or touches remotes; publishing is your separate step.
-- **Traceable acceptance** — every criterion has a stable `AC-NNN` ID; every task declares which IDs it `Covers`, and `sdd check` validates the relationships deterministically.
-- **Convention-first** — `AGENTS.md` is law; a user-provided precondition, read by every agent, never created or edited by sdd-flow.
-- **Token-friendly** — Orchestrator stays thin, subagents read only what they need, Tech Lead curates per-task context so devs don't grep blindly.
+Full SDD includes a deterministic local checker (`skills/sdd/scripts/sdd check <slug> --phase resume|scope|plan|verify`) that validates file structure, acceptance coverage, and commit hashes using the Python 3.11+ standard library.
+
+### Mini-SDD (`/mini-sdd`)
+
+Designed for smaller features, bug fixes, and contained refactors. The orchestrator plans directly into `.spec/<slug>/plan.md` using `sdd-plan`, pauses for your approval, and delegates execution and verification to a single `mini-sdd-developer` subagent.
+
+### Standalone Skills (`sharp-me`, `sdd-plan`, `sdd-debug`, `sdd-implement`, `sdd-review`, `pr-creation`)
+
+Each standalone skill works independently of the `/sdd` and `/mini-sdd` pipelines:
+
+- **Refine, plan, or debug first:** `sharp-me`, `sdd-plan`, and `sdd-debug` write their resulting plans to `.spec/<name>/plan.md` without touching project code.
+- **Execute on demand:** `sdd-implement` executes any `.spec/<name>/plan.md` (or external plan) in your current session or an isolated subagent, logging progress in `.spec/<name>/history.md`.
+- **Review independently:** `sdd-review` audits uncommitted changes, diffs, or files against project conventions and acceptance criteria in an isolated subagent.
 
 ---
 
 ## Install
 
-### Interactive Wizard (All Clients — Local or Global)
+Run the interactive installer to choose **local** (project) or **global** (user) scope for `claude`, `gemini`, `codex`, `opencode`, `kilo`, `cursor`, `windsurf`, `antigravity`, `copilot`, or `universal`:
 
-Run the installer with **no flags** to launch the interactive wizard. It asks for **local**
-(current project) or **global** (machine-wide) scope, then lists every supported client
-(`claude`, `gemini`, `codex`, `opencode`, `kilo`, `cursor`, `windsurf`, `antigravity`, `copilot`,
-plus `universal`) unchecked, grouping the ones that share a skills directory, so you pick exactly
-which to install:
-
-The wizard highlights the focused client and checked selections, keeps keyboard hints
-visible, and scrolls the list in smaller terminals. Navigation updates the affected
-rows without redrawing the entire menu.
+**macOS / Linux / WSL / git-bash**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.sh | bash
 ```
 
-**Windows (PowerShell):**
+**Windows (PowerShell)**
 
 ```powershell
 irm https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.ps1 -OutFile install.ps1
 .\install.ps1
 ```
 
-**Non-interactive CLI flags:**
+**Native plugin / extension commands:**
 
-```bash
-# Specific client(s), local or global
-curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.sh \
-  | bash -s -- --client <claude|gemini|codex|opencode|kilo|cursor|windsurf|antigravity|copilot|universal> --global
+- **Claude Code:** `/plugin marketplace add nushey/sdd-flow` then `/plugin install sdd-flow@sdd-flow`
+- **Gemini CLI:** `gemini extensions install https://github.com/nushey/sdd-flow`
+- **OpenAI Codex:** `codex plugin marketplace add nushey/sdd-flow` then `codex plugin add sdd-flow`
 
-```
+See **[INSTALL.md](./INSTALL.md)** for non-interactive CLI flags, per-client paths, and uninstall instructions.
 
-Per-client install locations, subagent adapters, and uninstall details → **[INSTALL.md](./INSTALL.md)**.
+### Prerequisites for `/sdd` and `/mini-sdd`
 
-### Native Plugin / Extension Alternatives
-
-#### Claude Code
-
-```text
-/plugin marketplace add nushey/sdd-flow
-/plugin install sdd-flow@sdd-flow
-```
-
-#### Gemini CLI
-
-```bash
-gemini extensions install https://github.com/nushey/sdd-flow
-```
-
-#### OpenAI Codex
-
-```bash
-codex plugin marketplace add nushey/sdd-flow
-codex plugin add sdd-flow
-```
-
-### Prerequisites (all clients)
-
-- Your project **must have an `AGENTS.md`** at the root. sdd-flow treats it as law and never
-  creates or scaffolds it — that is on you.
-- **Git** — the project must be a git repository with at least one commit (both flows stop at
-  the start otherwise). No remote, upstream, or GitHub CLI is needed.
-- **Python 3.11+** (`python3` on macOS/Linux, `python` on Windows) for Full SDD's `sdd check`.
-  Standard library only — nothing to `pip install`.
-
-### Setup FAQ
-
-> **Is sdd-flow an MCP server I need to start or keep running?**
-> No. There is no server, no process, no port.
-> The skills and subagent prompts are read directly off disk by whatever harness you're using.
-
-> **Where does sdd-flow "register" itself — is there a config/registry file?**
-> No `.skillsconfig`, no `sdd-flow.json`. Claude Code and Gemini CLI use their own plugin/extension
-> loaders (`.claude-plugin/`, `gemini-extension.json`); every other client just needs the `skills/`
-> and `agents/` folders copied into the directory it already scans (`.agents/skills/`,
-> `.codex/agents/`, etc. — see [INSTALL.md](./INSTALL.md)).
-
-> **Do I need to write my own `AGENTS.md`?**
-> Yes, before running SDD. It's the single source of truth every subagent reads for domain
-> terminology, conventions, and constraints. sdd-flow fails fast (`Status: FAIL — AGENTS.md
-> missing`) rather than inventing or scaffolding one.
-
----
-
-## SDD Lifecycle
-
-### Full SDD
-
-```
-/sdd Add OAuth login with Google
-```
-
-Best for big features, complex refactors, and changes that need architectural validation and
-context isolation between phases.
-
-0. **Triage** (Orchestrator) — asks clarifying questions about scope and Reference Files (Gold
-   Standards) when the architecture is flexible. Writes `intake.md`, including the local base
-   commit the feature is reviewed against.
-1. **Init & Scope** — `sdd-init` verifies `AGENTS.md` is present (precondition, never created),
-   confirms Reference Files exist, and refines `intake.md` into `scope.md` — business intent,
-   observable acceptance criteria with stable `AC-NNN` IDs, style references.
-2. **Design + Tasks** — `sdd-tech-lead` writes `design.md` (feature-level, no file lists),
-   one atomic task file per unit of work (each with the AC IDs it `Covers` and its own Reference
-   Files, at most 5 context and 3 reference files), reviews design and tasks as a whole, and only
-   then writes `tasks.index.md` and runs `sdd check --phase plan`.
-3. **Implement** — `sdd-developer` runs once per task: reads the task + `design.md` + curated
-   context only, implements, commits with conventional commits, fills the Implementation log.
-   One task = one commit.
-4. **Verify** — `sdd-verifier` cross-checks Implementation logs against actual git history, runs
-   tests, reviews the diff from the base commit against each AC, and on PASS commits the spec
-   artifacts locally. Never pushes, opens PRs, or merges.
-
-All artifacts live under `.spec/<feature-slug>/`. Re-running `/sdd <slug>` on an existing slug
-resumes where it left off — nothing restarts from zero.
-
-### Mini-SDD
-
-```
-/mini-sdd Fix the typo in the header and update the styles
-```
-
-Best for small fixes/refactors where the full 5-phase flow is overkill. Planning (`sdd-plan`
-skill) runs directly in the Orchestrator and waits for your approval; only implementation is delegated — to a single
-`mini-sdd-developer` subagent, cold-started so it loads the Bootstrap (skills + MCP calls) declared
-in `plan.md` before writing any code.
-
-### Failure behavior (both flows)
-
-- **Full SDD:** max 3 fix attempts per feature. On a Verifier failure the Tech Lead produces a
-  **fix task** under `fixes/` — `design.md` stays as-is, the loop doesn't redesign from scratch.
-  A developer blocker (tools, permissions, unclear requirement) stops the run and is reported to
-  you instead; it does not consume a fix.
-- **Mini-SDD:** max 3 repair attempts per feature, shared by tests, acceptance checks, and
-  post-implementation validations and recorded in `plan.md`, so a new session continues the same
-  budget. Mini-SDD has no `fixes/` folder.
-- A fundamental design gap stops the loop and escalates to the user — sdd-flow does not force a
-  4th cycle on a broken plan.
-- Nothing is ever pushed. If the local closure (committing the spec artifacts) fails after a
-  PASS, re-running `/sdd <slug>` completes it without re-implementing. Code committed after a PASS
-  makes it stale and triggers a new verification. On final failure, fix commits stay on the local
-  feature branch; you decide what to do with them.
-
-### `sdd check`
-
-Full SDD's deterministic validator ships inside the `sdd` skill (`skills/sdd/scripts/`). It reads
-`.spec/<slug>/` and local git only — no writes, no network, no model:
-
-```
-sdd check <feature-slug> [--phase resume|scope|plan|verify]
-```
-
-It checks required files per phase, AC/task/fix IDs, index ↔ file correspondence, statuses,
-coverage, unknown AC references, the 5/3 Context/Reference caps, and that every commit hash is a
-local commit of the feature. Exit `0` = contract holds (`OK <phase>` or `OK resume: <state>`), `1`
-= findings (`CODE path:line: explanation`), `2` = usage, unsupported format, or missing runtime.
-The agents call it by absolute path; to type `sdd check` yourself, add the installed
-`skills/sdd/scripts/` folder to your `PATH` (`sdd` on POSIX, `sdd.cmd` on Windows). It never proves
-an AC is met or that a design is good — that stays with the Tech Lead and the Verifier. Mini-SDD
-and standalone `plan.md` files are not validated (exit `2`). Specs created before AC IDs fail
-with findings and are never migrated automatically. Full grammar:
-[`skills/sdd/references/check-contract.md`](./skills/sdd/references/check-contract.md).
-
----
-
-## Skills & Subagents
-
-| Name | Type | Invocation | Purpose |
-|------|------|------------|---------|
-| `sdd` | Skill | `/sdd <feature>` | Orchestrator — triages, writes `.spec/` artifacts, delegates each phase |
-| `mini-sdd` | Skill | `/mini-sdd <change>` | Leaner flow: planning in-orchestrator, one delegated developer subagent |
-| `sharp-me` | Skill | `/sharp-me <idea or plan>`, or ask to refine an approach together | Researches, asks questions, and proposes improvements until there is a refined action plan |
-| `sdd-plan` | Skill | ask for a plan, or loaded by `mini-sdd` | Proportional implementation plan without writing code; Mini-SDD's planner |
-| `sdd-debug` | Skill | `/sdd-debug <issue>`, or ask to debug a failure at the root | Traces a bug's root cause and affected callers/modules in the current session; writes a non-patch fix plan to `.spec/<bug-slug>/plan.md` |
-| `sdd-implement` | Skill | ask to implement an existing plan, or `/sdd-implement <plan>` | Implements all or selected points in the current session or a subagent; cumulative history, no commits |
-| `sdd-review` | Skill | ask for a code review, acceptance review, or both | Delegates an isolated reviewer that applies this skill; no implementation |
-| `pr-creation` | Skill | only when you ask for a PR | PR body standard — value-oriented, minimal technical noise; not part of either flow |
-| `sdd-init` | Subagent | delegated, Phase 1 | Verifies `AGENTS.md`, refines `intake.md` → `scope.md` |
-| `sdd-tech-lead` | Subagent | delegated, Phase 2 + failure recovery | Writes `design.md`, `tasks.index.md`, task files; produces fix tasks on failure |
-| `sdd-developer` | Subagent | delegated once per task | Implements exactly one task, commits, fills Implementation log |
-| `sdd-verifier` | Subagent | delegated, Phase 4 | Runs tests, cross-checks logs vs. git, commits spec artifacts locally on PASS |
-| `mini-sdd-developer` | Subagent | delegated by Mini-SDD | Cold-context implementer for a Mini-SDD `plan.md`; executes all tasks, commits, reports back |
-
-### Collaborative refinement
-
-Use `/sharp-me <idea or plan>` to explore better ways to accomplish a goal,
-uncover blind spots, and simplify an approach. It works with loose ideas and
-existing plans, including topics outside software, and needs no repository or
-subagents. It researches relevant context, asks brief rounds of independent
-questions, and develops recommendations with you while preserving your intended
-outcome. Decisions that require evidence become agreed investigation steps.
-
-The result is a self-contained action plan with the agreed decisions, reasons,
-ordered steps, and verification. It is saved to `.spec/<plan-name>/plan.md`;
-the skill does not implement the plan or start another flow. Use `sdd-plan`
-when you need a straightforward implementation breakdown, `sdd-debug` when you
-need to diagnose a failure and plan a root-cause fix, and `sdd-review` when you
-want to review an implementation.
-
-```text
-/sharp-me I want to run a neighborhood repair event. Help me improve my approach.
-/sharp-me Refine this migration plan with me and look for simpler alternatives.
-```
-
-### Root-cause debugging
-
-Use `/sdd-debug <issue>` to investigate a bug in the current session, prove its
-root cause with code or execution evidence, and map every affected point across
-callers and interacting modules. Instead of patching the symptom or narrowing
-valid behavior, it designs a fix that resolves the underlying logic, unhandled
-case, or defective contract within the existing architecture. When an existing
-contract or core rule is itself broken, it presents the evidence and agrees on
-the correction with you before finalizing the plan.
-
-The diagnosis and ordered fix steps are saved to `.spec/<bug-slug>/plan.md`
-without modifying project files or creating commits, ready to execute with
-`/sdd-implement`.
-
-```text
-/sdd-debug Invoice totals fail when a discount line has a null tax rate.
-/sdd-debug Trace why session refresh drops active permissions and plan a root-cause fix.
-```
-
-### Implement an existing plan
-
-Use `/sdd-implement <plan>` to implement a plan from any source, including
-`sdd-plan`, `sdd-debug`, `sharp-me`, an external file, or the conversation. Standalone
-`sdd-plan`, `sdd-debug`, and `sharp-me` save their plans under `.spec/<plan-name>/`. External
-plans are copied there without rewriting their content.
-
-When not specified, the skill asks which points to implement and whether to work
-in the current session or an isolated subagent. It investigates relevant code
-and discusses ambiguous requirements, missing technical direction, and dependencies
-with you before implementing. Clarifications do not generate a replacement plan.
-
-The original plan stays unchanged. A cumulative `history.md` beside it records
-agreed decisions, work performed, checks, and pending points. It is created when
-missing and reused across executions. The skill makes no commits and needs no
-registered developer role; isolated delegation is needed only for subagent mode.
-Full SDD and Mini-SDD retain their own execution, commits, and tracking.
-
-```text
-/sdd-implement Implement all points in .spec/settings-search/plan.md in this session.
-/sdd-implement Implement points 2 and 3 of the supplied plan using a subagent.
-```
-
-### Standalone reviews
-
-Use `/sdd-review <request>` to review code, acceptance compliance, or both. Code
-reviews check project standards, reuse, and code quality. Acceptance reviews compare
-the implementation with the original request or supplied criteria, including
-unsupported business decisions. A complete review applies all three checks.
-
-```text
-/sdd-review review the uncommitted code changes
-/sdd-review check this implementation against the supplied acceptance criteria
-/sdd-review review both code quality and compliance with the original request
-```
-
-The invoking agent refines the user's query without expanding its scope and
-starts one isolated reviewer subagent with that prompt and the skill's path.
-The reviewer loads `sdd-review`, researches the actual implementation, and returns
-findings with file, line, evidence, impact, and a suggested correction. It does
-not delegate again. Questions go through the invoking agent; reports stay in
-chat unless a file is requested.
-
-Isolated subagent delegation is required, but no dedicated reviewer role,
-feature branch, spec folder, or checker is needed. If the harness cannot delegate,
-the skill stops rather than reviewing inline. Full SDD and Mini-SDD retain their
-existing verification steps; neither automatically loads `sdd-review`.
-
-Full prompt bodies live at `skills/<name>/SKILL.md` and `agents/<name>.md` — read them directly,
-there is no compiled/hidden variant.
-
-### Artifacts (`.spec/<feature-slug>/`)
-
-```
-.spec/<feature-slug>/
-├── intake.md          # Orchestrator's grilling output (Phase 0)
-├── scope.md            # sdd-init's refined contract (Phase 1)
-├── design.md            # sdd-tech-lead's technical design (Phase 2)
-├── tasks.index.md        # ordered task list with Covers and Status
-├── tasks/<n>-<slug>.md    # one atomic task per file, incl. Implementation log
-├── fixes/<n>-<slug>.md    # fix tasks emitted on failure recovery
-└── verify.md              # sdd-verifier's PASS/FAIL report (Phase 4)
-```
-
----
-
-## Configuration & Rules Sync
-
-sdd-flow has **no plugin-specific config file** — no `.skillsconfig`, no `sdd-flow.json`. The only
-configuration surface is what your agent harness already reads:
-
-| Surface | Owned by | Role |
-|---------|----------|------|
-| `AGENTS.md` (project root) | You (user-provided precondition) | Domain terminology, conventions, hard architecture rules — every subagent treats it as law |
-| `CLAUDE.md` (optional) | You | Read alongside `AGENTS.md` when present; same authority |
-| `skills/<name>/SKILL.md` | sdd-flow | Orchestrator + standards prompts — edit only if you're forking the flow itself |
-| `agents/<name>.md` | sdd-flow | Canonical subagent prompts — single source of truth; per-client adapters (Codex TOML, Opencode `mode: subagent`, etc.) are generated/copied from these, never hand-edited |
-
-There is no environment variable and no hook sdd-flow injects into the host — it only reads the
-files above and writes to `.spec/<feature-slug>/` and git.
-
----
-
-## FAQ
-
-> **Does sdd-flow talk to any network service?**
-> No. Neither flow nor `sdd check` uses the network. Installing or updating the pack may download
-> its source; pushing and opening PRs are actions you take yourself, outside the flow.
-
-> **Can I skip a phase, e.g. go straight to Implement?**
-> Not through the intended flow — each phase's subagent expects the prior phase's artifact
-> (`scope.md`, `design.md`, a task file) to exist and refuses to invent one. You can still run a
-> subagent by hand if you already have the artifact it needs.
-
-> **What happens to `.spec/` after Verify passes?**
-> Nothing automatic — the folder stays on disk as the record of what was built and why. It's not
-> gitignored by default in a consuming project unless you choose to.
-
-> **Why five subagents instead of one big prompt?**
-> Context isolation. Each phase starts cold, so a bug in Implement can't leak assumptions the
-> Verifier should be checking independently, and Design can't accidentally see code that doesn't
-> exist yet.
-
-> **Does the Mini-SDD path get the same context isolation?**
-> Partially. Planning runs in the Orchestrator's own context (not isolated); only the developer
-> subagent is cold-started. That's the intended trade-off for small changes — full isolation for
-> every phase is Full SDD's job.
+- **`AGENTS.md` at the project root** — required precondition defining project rules and conventions (`sdd-flow` never generates it).
+- **Git repository** with at least one commit.
+- **Python 3.11+** for Full SDD's `sdd check` validator (standard library only).
 
 ---
 
