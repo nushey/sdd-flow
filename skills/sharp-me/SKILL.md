@@ -6,8 +6,8 @@ description: >
   correct weaknesses, simplify scope or execution, or sharpen a proposal
   through questions and recommendations. Preserve the intended outcome
   while improving how to achieve it. Planning only; use sdd-plan for a
-  straightforward implementation breakdown and sdd-review to review code
-  or acceptance compliance.
+  straightforward implementation breakdown, sdd-debug to diagnose a failure,
+  and sdd-review to review code or acceptance compliance.
 ---
 
 # sharp-me

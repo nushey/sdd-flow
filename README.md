@@ -232,6 +232,7 @@ with findings and are never migrated automatically. Full grammar:
 | `mini-sdd` | Skill | `/mini-sdd <change>` | Leaner flow: planning in-orchestrator, one delegated developer subagent |
 | `sharp-me` | Skill | `/sharp-me <idea or plan>`, or ask to refine an approach together | Researches, asks questions, and proposes improvements until there is a refined action plan |
 | `sdd-plan` | Skill | ask for a plan, or loaded by `mini-sdd` | Proportional implementation plan without writing code; Mini-SDD's planner |
+| `sdd-debug` | Skill | `/sdd-debug <issue>`, or ask to debug a failure at the root | Traces a bug's root cause and affected callers/modules in the current session; writes a non-patch fix plan to `.spec/<bug-slug>/plan.md` |
 | `sdd-implement` | Skill | ask to implement an existing plan, or `/sdd-implement <plan>` | Implements all or selected points in the current session or a subagent; cumulative history, no commits |
 | `sdd-review` | Skill | ask for a code review, acceptance review, or both | Delegates an isolated reviewer that applies this skill; no implementation |
 | `pr-creation` | Skill | only when you ask for a PR | PR body standard — value-oriented, minimal technical noise; not part of either flow |
@@ -253,19 +254,39 @@ outcome. Decisions that require evidence become agreed investigation steps.
 The result is a self-contained action plan with the agreed decisions, reasons,
 ordered steps, and verification. It is saved to `.spec/<plan-name>/plan.md`;
 the skill does not implement the plan or start another flow. Use `sdd-plan`
-when you need a straightforward implementation breakdown, and `sdd-review`
-when you want to review an implementation.
+when you need a straightforward implementation breakdown, `sdd-debug` when you
+need to diagnose a failure and plan a root-cause fix, and `sdd-review` when you
+want to review an implementation.
 
 ```text
 /sharp-me I want to run a neighborhood repair event. Help me improve my approach.
 /sharp-me Refine this migration plan with me and look for simpler alternatives.
 ```
 
+### Root-cause debugging
+
+Use `/sdd-debug <issue>` to investigate a bug in the current session, prove its
+root cause with code or execution evidence, and map every affected point across
+callers and interacting modules. Instead of patching the symptom or narrowing
+valid behavior, it designs a fix that resolves the underlying logic, unhandled
+case, or defective contract within the existing architecture. When an existing
+contract or core rule is itself broken, it presents the evidence and agrees on
+the correction with you before finalizing the plan.
+
+The diagnosis and ordered fix steps are saved to `.spec/<bug-slug>/plan.md`
+without modifying project files or creating commits, ready to execute with
+`/sdd-implement`.
+
+```text
+/sdd-debug Invoice totals fail when a discount line has a null tax rate.
+/sdd-debug Trace why session refresh drops active permissions and plan a root-cause fix.
+```
+
 ### Implement an existing plan
 
 Use `/sdd-implement <plan>` to implement a plan from any source, including
-`sdd-plan`, `sharp-me`, an external file, or the conversation. Standalone
-`sdd-plan` and `sharp-me` save their plans under `.spec/<plan-name>/`. External
+`sdd-plan`, `sdd-debug`, `sharp-me`, an external file, or the conversation. Standalone
+`sdd-plan`, `sdd-debug`, and `sharp-me` save their plans under `.spec/<plan-name>/`. External
 plans are copied there without rewriting their content.
 
 When not specified, the skill asks which points to implement and whether to work
