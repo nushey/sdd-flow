@@ -1,20 +1,21 @@
 ---
 name: sharp-me
 description: >
-  Collaboratively refine an idea or existing plan into an actionable plan.
-  Use when the user wants to explore better approaches, find blind spots,
-  correct weaknesses, simplify scope or execution, or sharpen a proposal
-  through questions and recommendations. Preserve the intended outcome
-  while improving how to achieve it. Planning only; use sdd-plan for a
-  straightforward implementation breakdown, sdd-debug to diagnose a failure,
-  and sdd-review to review code or acceptance compliance.
+  Grill an idea or proposal with the user until it becomes a refined,
+  well-defined concept, saved as a brief. Use when the user wants to explore
+  better approaches, find blind spots, correct weaknesses, simplify scope, or
+  sharpen an idea through questions and recommendations, or asks to be
+  grilled on an idea before planning it. Preserve the
+  intended outcome while improving how to achieve it. Refinement only; use
+  sdd-plan to turn a brief into an implementation plan, sdd-debug to diagnose
+  a failure, and sdd-review to review code or acceptance compliance.
 ---
 
 # sharp-me
 
 Help the user find a better way to accomplish what they want. Combine relevant
 research, constructive recommendations, and conversation until the important
-decisions are settled and the result is a coherent action plan.
+decisions are settled and the idea becomes a coherent, well-defined concept.
 
 Preserve the user's intended outcome. Their initial approach can change; explain
 why another approach serves that outcome better and agree on the change with
@@ -83,32 +84,31 @@ user on what to observe and how it will inform the decision. Do not repeatedly
 rephrase the same question or present a speculative answer as settled.
 
 An unresolved point must become either an agreed decision or an agreed action
-to obtain the evidence needed. Put that action before work that depends on its
-result. If its result determines the approach, keep downstream steps conditional
-and identify the decision to revisit; do not claim the implementation is ready.
+to obtain the evidence needed. If its result determines the approach, keep the
+dependent decisions open and name the one to revisit; do not present the idea as
+ready to plan.
 
-## Deliver the refined action plan
+## Deliver the brief
 
-Finish when the decisions needed for the next actions are settled and remaining
+Finish when the decisions that shape the idea are settled and remaining
 uncertainties have an agreed resolution path. Do not try to explore every
 conceivable branch, require a fixed number of rounds, or keep interviewing after
-the plan is clear.
+the concept is clear.
 
-Deliver a self-contained plan proportional to the request. Include the following
+Deliver a self-contained brief proportional to the idea. Include the following
 where relevant, without empty sections or a transcript of the conversation:
 
-- **Goal and scope:** the outcome and agreed constraints.
-- **Refinements:** consequential changes to the original proposal and why they
+- **Goal and scope:** the outcome, how success is recognized, and agreed
+  constraints.
+- **Refinements:** consequential changes to the original idea and why they
   improve it. If the original approach holds up, say so.
 - **Decisions:** agreed choices, important tradeoffs, and their reasons.
-- **Actions:** concrete ordered steps, their dependencies, and the next action.
-- **Verification:** observable results that show the goal has been achieved.
 - **Remaining uncertainty:** agreed evidence-gathering actions and the decisions
-  they must resolve before dependent work begins.
+  they must resolve.
 
-Write in the user's language. Save the refined plan to
-`.spec/<plan-name>/plan.md` in the workspace, using a name that identifies the
-plan and creating the folder when needed. Return its path. Stop after the plan.
-Do not implement changes, execute proposed experiments, create branches, commit,
-or start another flow.
-The user may carry the refined plan into an implementation workflow separately.
+The brief states what to achieve and why; ordered steps and acceptance criteria
+belong to `sdd-plan`, which reads the brief as input. Write in the user's
+language. Save it to `.spec/<name>/brief.md` in the workspace, using a name that
+identifies the idea and creating the folder when needed. Return its path. Stop
+after the brief. Do not implement changes, execute proposed experiments, create
+branches, commit, or start another flow.
