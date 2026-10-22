@@ -14,14 +14,14 @@
     },
     {
       "id": 2,
-      "prompt": "Help me refine this plan for a small community newsletter. All decisions below are confirmed: send one email each month to the existing opt-in list using our existing email service; collect submissions in our existing shared document; I approve the content; Sam sends the approved email; no website, automation, new tools, or additional approval rounds. The sequence is collect submissions, draft the issue, approve it, send it, and check the service's delivery report. Success means the approved issue reaches the existing list every month. You can deliver the refined action plan now if nothing material is missing.",
-      "expected_output": "Save a self-contained, proportionate action plan to .spec/<plan-name>/plan.md and return its path, retaining the sound approach and confirmed responsibilities. Do not manufacture a criticism or force an interview. Do not add an unrequested deadline, tool, metric, fallback, or business rule. Explain any genuine refinement and how success will be checked without executing the plan.",
+      "prompt": "Help me refine this plan for a small community newsletter. All decisions below are confirmed: send one email each month to the existing opt-in list using our existing email service; collect submissions in our existing shared document; I approve the content; Sam sends the approved email; no website, automation, new tools, or additional approval rounds. The sequence is collect submissions, draft the issue, approve it, send it, and check the service's delivery report. Success means the approved issue reaches the existing list every month. You can deliver the refined brief now if nothing material is missing.",
+      "expected_output": "Save a self-contained, proportionate brief to .spec/<name>/brief.md and return its path, retaining the sound approach and confirmed responsibilities. Do not manufacture a criticism or force an interview. Do not add an unrequested deadline, tool, metric, fallback, or business rule. Explain any genuine refinement and how success will be recognized, without writing implementation steps or acceptance criteria and without executing anything.",
       "files": [],
       "expectations": [
-        "Deliver an actionable plan that preserves the monthly cadence, existing tools and opt-in list, user approval, and Sam's sending responsibility.",
-        "Use the existing delivery report to verify the stated success condition without adding a new target, tool, deadline, fallback, or approval round.",
-        "Do not block the plan with unnecessary questions or manufacture a problem with the confirmed approach.",
-        "Save the completed plan to .spec/<plan-name>/plan.md even though no file was explicitly requested, and return the path."
+        "Deliver a brief that preserves the monthly cadence, existing tools and opt-in list, user approval, and Sam's sending responsibility.",
+        "Keep the existing delivery report as the way to recognize the stated success condition without adding a new target, tool, deadline, fallback, or approval round.",
+        "Do not block the brief with unnecessary questions or manufacture a problem with the confirmed approach.",
+        "Save the completed brief to .spec/<name>/brief.md even though no file was explicitly requested, return the path, and do not write a plan.md."
       ]
     },
     {

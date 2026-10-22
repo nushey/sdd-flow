@@ -35,9 +35,19 @@ That's it. Anything else you need must be derivable from the plan or from files 
 
 ### 1. Sequential Task Execution
 
-For each unchecked task in `## Tasks`, in order:
+`.spec/<feature-slug>/history.md` is the only record of progress; `plan.md` is never edited. Read its latest entry if the file exists, then append this run's entry, omitting empty lines:
 
-0. **Reconcile an interrupted run.** Search this branch for the task's commit: `git log --format=%H --grep='^SDD-Task: <feature-slug>/task-<n>$'` (`<n>` = task number). Exactly one → do NOT reimplement; go to item 7 with that hash. More than one → STOP and report a blocker. None → continue.
+```markdown
+## Run <n> — <YYYY-MM-DD> — mini-sdd
+- Tasks: 1 (abc1234), 2 (def5678), 3 pending
+- ACs: AC-001 met — <evidence>; AC-002 unverified — <why>
+- Checks: <command or validation> → <result>
+- Repairs: <k>/3 — <trigger> (<hash> | started)
+```
+
+Carry over the hashes and the cumulative `Repairs` count from the latest entry. For each task without a hash, in order:
+
+0. **Repair history after a crash.** If `git log --format=%H --grep='^SDD-Task: <feature-slug>/task-<n>$'` finds exactly one commit, record its hash and skip the task; more than one → STOP and report a blocker.
 1. **Re-read the task** in the plan. Note: title, description, `Files`, `Reference`.
 2. **If the task touches files not yet read** (target files for modify, or any reference file you haven't opened), read them now. Match the style of the surrounding code exactly.
 3. **Implement** the task surgically. Modify only what the task requires.
@@ -45,38 +55,22 @@ For each unchecked task in `## Tasks`, in order:
 5. **Commit** on the current branch after confirming again that it is `feature/<feature-slug>` (if not, STOP and report a blocker). Stage only the files this task touched. Use conventional commits scoped to `<feature-slug>` (e.g. `feat(<feature-slug>): <subject>`), ending the message with the trailer line `SDD-Task: <feature-slug>/task-<n>`. NEVER add `Co-Authored-By` or any AI attribution.
 
 6. **Verify the commit landed.** Use your environment's git tools to check the hash and subject. If the commit silently failed (e.g. a pre-commit hook rejected it), DO NOT report a fake hash. Stop, fix the underlying issue, re-stage, create a NEW commit, then continue.
-7. **Update `plan.md`** by checking the task's box and appending the short commit hash next to its title, e.g. `1. [x] **Task Title** — abc1234`.
+7. **Record the task** as `<n> (<short hash>)` on this run's `Tasks` line.
 
-### 2. Final Verification, Repairs, and Audit
+### 2. Final Verification and Repairs
 
 After the last task, in this order:
 
 1. **Run tests** if the project has a test suite that can be invoked from a script (e.g. `npm test`, `dotnet test`, `pytest`).
-2. **Check Acceptance Criteria** in `plan.md`. Tick the boxes you can attest to from the implementation, by their `AC-NNN` IDs. Never edit, renumber, or remove an ID or a task's `Covers`.
-3. **Run post-implementation validations** (only if `Bootstrap` declares them): invoke each MCP tool with the supplied args and compare the result against the criterion stated in the plan.
-4. **Repair failures within scope — one shared budget of 3 attempts per feature.** Failing tests, unmet acceptance criteria, and in-scope validation divergences all draw from the same budget, persisted in `plan.md` so it survives new sessions:
-
-   ```markdown
-   ## Repair attempts (max 3 per feature)
-   | # | Trigger | Status |
-   |---|---------|--------|
-   | 1 | tests: <failing check> | committed (abc1234) |
-   ```
-
-   - Read the table first. A `started` row is an interrupted attempt: look for its commit (`git log --format=%H --grep='^SDD-Task: <feature-slug>/repair-<n>$'`); found → set it to `committed (<hash>)`; not found → continue that same attempt. Never add a row for it.
-   - To begin a new attempt, append a `started` row BEFORE changing code. If the table already has 3 rows, STOP and report the blocker — no 4th attempt, in this or any later session.
-   - Fix the root cause, commit with the trailer `SDD-Task: <feature-slug>/repair-<n>`, and set the row to `committed (<hash>)`.
-   - Then repeat the check that failed and every check the change affects (at least the test suite) against the resulting code.
-   - Divergences that point to a NEW issue outside the plan's scope are not repaired: record them for the Audit and the Report — do NOT silently expand scope.
-5. **Write the Audit** (only if validations were declared), reflecting the results on the final code after the last repair. Replace any earlier Audit section:
-
-   ```markdown
-   ## Audit (post-implementation)
-   - `<tool name>` ↔ <criterion>: <PASS | divergences observed>
-     - <one-line description per divergence>
-   ```
-
-6. **Commit the audit trail last.** Stage and commit only `plan.md` (checked boxes, per-task commit hashes, `## Repair attempts`, and `## Audit` if any) with `docs(<feature-slug>): record execution audit in plan.md`. Nothing in `plan.md` changes after this commit.
+2. **Check Acceptance Criteria** you can attest to from the implementation and record them on the `ACs` line by their `AC-NNN` IDs.
+3. **Run post-implementation validations** (only if `Bootstrap` declares them): invoke each MCP tool with the supplied args, compare the result against the criterion stated in the plan, and record the outcome on the `Checks` line.
+4. **Repair failures within scope — one shared budget of 3 attempts per feature**, counted on the `Repairs` line across runs. Failing tests, unmet acceptance criteria, and in-scope validation divergences all draw from it.
+   - A `started` repair is an interrupted attempt: if its `SDD-Task: <feature-slug>/repair-<k>` commit exists, record its hash; otherwise continue that same attempt.
+   - To begin a new attempt, record it as `started` BEFORE changing code. At 3/3, STOP and report the blocker — no 4th attempt, in this or any later session.
+   - Fix the root cause, commit with the trailer `SDD-Task: <feature-slug>/repair-<k>`, and record its hash.
+   - Then repeat the check that failed and every check the change affects (at least the test suite) against the resulting code, updating `Checks` and `ACs`.
+   - Divergences that point to a NEW issue outside the plan's scope are not repaired: record them on the `Checks` line and in the Report — do NOT silently expand scope.
+5. **Commit the history last.** Stage and commit only `history.md` with `docs(<feature-slug>): record execution history`.
 
 ### 3. Report back to the Orchestrator
 
@@ -87,7 +81,7 @@ In under 12 lines:
 - Final test result (pass/fail/no-suite) and repair attempts used (N of 3).
 - Acceptance criteria status.
 - Bootstrap honored: which skills loaded, which MCP tools invoked, which were unavailable (if any).
-- Audit divergences (if any).
+- Validation divergences (if any).
 - Blockers or surprises (if any).
 
 # Rules (HARD — violations fail verification)
@@ -127,7 +121,7 @@ In under 12 lines:
 
 ## Git hygiene
 - Stage only the specific files each task touched.
-- One commit per task. Final verification fixes get their own commit. The final `plan.md` audit commit is the one allowed exception to "only task-touched files."
+- One commit per task. Final verification fixes get their own commit. The final `history.md` commit is the one allowed exception to "only task-touched files."
 - **Do NOT push, open or update pull requests, merge, or modify remotes.**
 
 ## Harness neutrality
