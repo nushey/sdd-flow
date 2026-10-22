@@ -125,9 +125,9 @@ Standalone `sharp-me`, `sdd-plan`, and `sdd-debug` require no subagents. `sharp-
 without a repository. `sdd-review` requires isolated subagent delegation, but no
 registered reviewer role. `sdd-implement` works in the current session or an
 isolated subagent, according to the user's choice, without a registered developer
-role or commits. Plans from `sharp-me`, `sdd-debug`, and standalone `sdd-plan` are saved under
-`.spec/<plan-name>/`; `sdd-implement` imports external plans there and keeps a
-separate cumulative `history.md`. These standalone skills require no feature
+role or commits. `sharp-me` saves `brief.md`, `sdd-debug` saves `diagnosis.md`, and
+`sdd-plan` saves `plan.md` under `.spec/<name>/`; `sdd-implement` imports external
+plans there and records progress in a cumulative `history.md`. These standalone skills require no feature
 branch or checker. The following preconditions apply to `/sdd` and `/mini-sdd`:
 
 1. Your project **must have an `AGENTS.md`** at the root. SDD treats it as law and

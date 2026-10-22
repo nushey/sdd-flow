@@ -53,14 +53,13 @@ context. Explain relevant alternatives and tradeoffs rather than silently
 choosing functional behavior.
 
 When a selected point depends on unselected work, communicate that dependency
-and agree with the user how to proceed before expanding the selection. Read
-existing history as context and check the relevant implementation to establish
-what is already present.
+and agree with the user how to proceed before expanding the selection. The
+`Tasks` line of the latest history entry establishes what is already done.
 
 Ask concise questions and wait for answers. Implement only after the necessary
-decisions are resolved. Record the selection, execution mode, and agreed
-clarifications in the history before implementation. Keep the original plan
-unchanged.
+decisions are resolved. Start this run's history entry before implementation,
+with the selected points pending and the agreed clarifications. Never edit the
+plan.
 
 ## Choose the agreed execution mode
 
@@ -115,19 +114,19 @@ requirements. Never build when project rules forbid it. Report what was actually
 checked and its result; distinguish completed work from failed or unverified
 behavior.
 
-Append the execution outcome to `history.md`, preserving earlier runs. For each
-run, record:
+`history.md` is the only record of progress. Each run appends one entry in this
+shape, preserving earlier entries and omitting empty lines:
 
-- The run date, plan source, selected points, and execution mode.
-- Clarifications and technical decisions agreed with the user.
-- Work performed and files changed, related to the selected points.
-- Checks executed and their results, including verification limitations.
-- Completed points, remaining work, and blockers.
+```markdown
+## Run <n> — <YYYY-MM-DD> — sdd-implement
+- Tasks: <plan label> done, <plan label> pending
+- ACs: AC-001 met — <evidence>; AC-002 unverified — <why>
+- Decisions: <agreed with the user during the run>
+- Checks: <command or validation> → <result>
+```
 
-Record partial progress when execution stops so a later session can understand
-what happened. Do not mark the original plan's checkboxes, rewrite its acceptance
-criteria, or add execution notes to it. The history belongs to this skill; do
-not add it to the other flows that produce plans.
+Update the entry as points complete, so a stopped run still shows what is done.
+Mention blockers on the line they affect.
 
 Finish with the plan and history paths, points completed, verification results,
 and any pending decisions or blockers. Do not create commits, including commits
