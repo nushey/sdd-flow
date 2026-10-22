@@ -33,10 +33,10 @@ Instead of jumping straight from a prompt to unreviewed code, it persists specif
 |-------|------------|---------|
 | `sdd` | `/sdd <feature>` | Full SDD orchestrator: triages scope, writes `.spec/<slug>/` artifacts, and delegates each phase to an isolated subagent. |
 | `mini-sdd` | `/mini-sdd <change>` | Lean SDD flow for small changes: plans in the orchestrator (`sdd-plan`) and delegates implementation to one cold-context developer subagent. |
-| `sharp-me` | `/sharp-me <idea or plan>` | Refines an idea or plan through research, focused questions, and tradeoff recommendations; saves `.spec/<plan-name>/plan.md`. |
-| `sdd-plan` | `/sdd-plan <request>` | Writes a proportional implementation plan to `.spec/<plan-name>/plan.md` without modifying code; also serves as Mini-SDD's planner. |
-| `sdd-debug` | `/sdd-debug <issue>` | Investigates a failure in the current session, proves the root cause, maps all affected points across callers and interacting modules, and saves a root-cause fix plan to `.spec/<bug-slug>/plan.md`. |
-| `sdd-implement` | `/sdd-implement <plan>` | Implements all or selected points of any plan in the current session or an isolated subagent, tracking runs in `.spec/<plan-name>/history.md` without creating commits. |
+| `sharp-me` | `/sharp-me <idea>` | Grills an idea through research, focused questions, and tradeoff recommendations until it is a well-defined concept; saves `.spec/<name>/brief.md`. |
+| `sdd-plan` | `/sdd-plan <request>` | Writes a proportional implementation plan to `.spec/<name>/plan.md` without modifying code, reading a brief or diagnosis as input when one applies; also serves as Mini-SDD's planner. |
+| `sdd-debug` | `/sdd-debug <issue>` | Investigates a failure in the current session, proves the root cause, maps all affected points across callers and interacting modules, and explains what broke and why in `.spec/<bug-slug>/diagnosis.md`. |
+| `sdd-implement` | `/sdd-implement <plan>` | Implements all or selected points of any plan in the current session or an isolated subagent, tracking runs in `.spec/<name>/history.md` without creating commits. |
 | `sdd-review` | `/sdd-review <request>` | Delegates code quality review, acceptance compliance review, or both to an isolated reviewer subagent without modifying code. |
 | `pr-creation` | `/pr-creation` | Formats pull request descriptions around user value and essential reviewer context when explicitly requested. |
 
@@ -87,8 +87,9 @@ Designed for smaller features, bug fixes, and contained refactors. The orchestra
 
 Each standalone skill works independently of the `/sdd` and `/mini-sdd` pipelines:
 
-- **Refine, plan, or debug first:** `sharp-me`, `sdd-plan`, and `sdd-debug` write their resulting plans to `.spec/<name>/plan.md` without touching project code.
-- **Execute on demand:** `sdd-implement` executes any `.spec/<name>/plan.md` (or external plan) in your current session or an isolated subagent, logging progress in `.spec/<name>/history.md`.
+- **Refine or debug first:** `sharp-me` turns an idea into `.spec/<name>/brief.md`; `sdd-debug` explains a failure in `.spec/<bug-slug>/diagnosis.md`. Neither touches project code.
+- **Plan:** `sdd-plan` is the only skill that writes `.spec/<name>/plan.md`, reading the brief or diagnosis in that folder as input. The plan is never edited during execution.
+- **Execute on demand:** `sdd-implement` executes any `.spec/<name>/plan.md` (or external plan) in your current session or an isolated subagent. Both it and Mini-SDD record progress only in `.spec/<name>/history.md`.
 - **Review independently:** `sdd-review` audits uncommitted changes, diffs, or files against project conventions and acceptance criteria in an isolated subagent.
 
 ---
