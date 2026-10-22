@@ -3,18 +3,27 @@ name: sdd-plan
 description: >
   Create a proportional implementation plan without writing code. Use when
   the user asks to plan a change, design an approach before coding, or break
-  an epic into reviewable tasks. Stop after the plan. Also loaded by
+  an epic into reviewable tasks. Reads a sharp-me brief or an sdd-debug
+  diagnosis as input when one applies. Stop after the plan. Also loaded by
   mini-sdd as its planner.
 ---
 
 # sdd-plan
 
-Turn a request into a plan that someone can execute without guessing. Plan only: never implement code, create branches, commit, push, or delegate to subagents.
+Turn a defined request into a plan that someone can execute without guessing. Plan only: never implement code, create branches, commit, push, or delegate to subagents.
 
 ## Modes
 
 - **Standalone** (the user asks for a plan): save the plan to `.spec/<plan-name>/plan.md`, using a name that identifies the plan, then return its path and stop. Create the folder when needed.
-- **Mini-SDD** (loaded by `mini-sdd`): write the plan to the `.spec/<slug>/plan.md` path the flow provides, using the Mini-SDD contract below, and return control to `mini-sdd`. Approval and execution belong to that flow.
+- **Mini-SDD** (loaded by `mini-sdd`): write the plan to the `.spec/<slug>/plan.md` path the flow provides and return control to `mini-sdd`. Approval and execution belong to that flow.
+
+Both modes write the same plan format.
+
+## Inputs
+
+A `brief.md` from `sharp-me` or a `diagnosis.md` from `sdd-debug` is input, not a plan. When the user names one, or one was produced earlier in this conversation, read it, treat its decisions as settled, and write `plan.md` in the same `.spec/<name>/` folder. If more than one could apply, ask which.
+
+From a diagnosis, the plan fixes the root cause at every affected point it lists. If an existing contract forces a symptom patch instead, raise it with the user before writing.
 
 ## 1. Research first
 
@@ -27,7 +36,7 @@ Before asking anything, read what answers questions for you:
 
 ## 2. Ask only what changes the plan
 
-A question is warranted only when its answer changes scope, acceptance, or approach, and research cannot settle it. Skip everything the request or the code already answers — there is no mandatory interview.
+A question is warranted only when its answer changes scope, acceptance, or approach, and research cannot settle it. Skip everything the request, the input, or the code already answers — there is no mandatory interview.
 
 Ask one question at a time, with your recommendation and the reason, so the user can confirm instead of invent:
 
@@ -51,37 +60,33 @@ If a check fails, fix the plan or ask one more question.
 
 ## 4. Write the plan
 
-Depth follows the request: a one-file fix fits in a few lines; an epic gets tasks that can each be reviewed on their own. Include only sections with content — no empty headers or ritual confirmations.
-
-- **Objective and scope** — the goal, and what is explicitly out of scope when that is not obvious.
-- **Acceptance** — observable, testable criteria, each with a stable ID: `AC-001`, `AC-002`, … (three digits, never renumbered or reused).
-- **Approach** — how it fits the existing architecture, what it reuses, and the reference files to imitate.
-- **Steps** — ordered, each one a reviewable unit with the files it touches and the AC IDs it covers. Every AC is covered by at least one step.
-- **Decisions and risks** — decisions taken (and whether the user confirmed them or they were assumed), plus known non-blocking risks. Omit when there are none.
-
-### Mini-SDD contract
-
-The `mini-sdd-developer` starts cold and reads only the plan, so a Mini-SDD plan uses these headings:
+Executors start cold and read only the plan. Depth follows the request: a one-file fix is one criterion and one task; an epic gets tasks that can each be reviewed on their own. Every plan uses these headings, omitting `Bootstrap` and `Decisions and Risks` when they have no content:
 
 ```markdown
 # Plan: <Feature Name>
 
 ## Objective
 ## Acceptance Criteria
-- [ ] AC-001: <observable criterion>
+- AC-001: <observable criterion>
 ## Bootstrap
 ## Approach
 ## Tasks
-1. [ ] **<Task title>**: <what to do>
+1. **<Task title>**: <what to do>
    - Covers: AC-001
    - Files: path/to/file (modify | create)
    - Reference: path/to/reference.ext
 ## Decisions and Risks
 ```
 
-Each task is one committable unit; the developer checks its box and appends the commit hash. Name a `Reference:` per task when one exists. Every task lists the AC IDs it covers; every AC is covered by at least one task, and no task covers an unknown ID. A Mini-SDD plan stays a single `plan.md` — no `scope.md`, `design.md`, or `tasks.index.md`.
+- **Objective** — the goal, and what is explicitly out of scope when that is not obvious.
+- **Acceptance Criteria** — observable, testable, each with a stable ID: three digits, never renumbered or reused.
+- **Approach** — how it fits the existing architecture, what it reuses, and the reference files to imitate.
+- **Tasks** — ordered; each one is a committable unit with the files it touches. Name a `Reference:` when one exists. Every AC is covered by at least one task, and no task covers an unknown ID.
+- **Decisions and Risks** — decisions taken (and whether the user confirmed them or they were assumed), plus known non-blocking risks.
 
-`## Bootstrap` tells the developer what to load before coding. Include only the subsections that have entries, and omit the whole section when none do:
+The plan is the agreed contract: executors never edit it and record progress in `history.md`. It stays a single `plan.md` — no `scope.md`, `design.md`, or `tasks.index.md`.
+
+`## Bootstrap` tells the executor what to load before coding. Include only the subsections that have entries:
 
 ```markdown
 ### Skills to load
@@ -90,7 +95,7 @@ Each task is one committable unit; the developer checks its box and appends the 
 ### MCP tools to (re-)invoke before coding
 - Tool: `mcp__<server>__<tool>`
   Args: `{ "param": "value" }`
-  Reason: why the developer must re-fetch instead of trusting a snapshot.
+  Reason: why the executor must re-fetch instead of trusting a snapshot.
 
 ### Post-implementation validations
 - Tool: `mcp__<server>__<tool>`
@@ -98,9 +103,9 @@ Each task is one committable unit; the developer checks its box and appends the 
   Compare against: what aspect of the implementation it validates.
 ```
 
-- Every MCP tool you used for context the developer needs goes under `MCP tools to (re-)invoke` with the same literal args. An embedded snapshot is no substitute: the re-fetch detects drift.
+- Every MCP tool you used for context the executor needs goes under `MCP tools to (re-)invoke` with the same literal args. An embedded snapshot is no substitute: the re-fetch detects drift.
 - Every skill that `AGENTS.md` or `CLAUDE.md` ties to the affected paths goes under `Skills to load`.
-- Args are literal JSON the developer can copy. No placeholders — if you lack a value, research is incomplete.
+- Args are literal JSON the executor can copy. No placeholders — if you lack a value, research is incomplete.
 
 Refer to skills by name and to MCP tools by full identifier, never by the UI of a specific harness.
 
