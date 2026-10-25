@@ -39,6 +39,8 @@ Instead of jumping straight from a prompt to unreviewed code, it persists specif
 | `sdd-implement` | `/sdd-implement <plan>` | Implements all or selected points of any plan in the current session or an isolated subagent, tracking runs in `.spec/<plan-name>/history.md` without creating commits. |
 | `sdd-review` | `/sdd-review <request>` | Delegates code quality review, acceptance compliance review, or both to an isolated reviewer subagent without modifying code. |
 | `pr-creation` | `/pr-creation` | Formats pull request descriptions around user value and essential reviewer context when explicitly requested. |
+| `writing-agents` | `/writing-agents <text or files>` | Evaluates and corrects agent instructions in Markdown, preserving behavior while improving clarity and concision. |
+| `writing-humans` | `/writing-humans <text or material>` | Evaluates and corrects human-facing writing for clarity, natural language, and coherent arguments while preserving meaning and depth. |
 
 ### Role Subagents
 
@@ -83,13 +85,14 @@ Full SDD includes a deterministic local checker (`skills/sdd/scripts/sdd check <
 
 Designed for smaller features, bug fixes, and contained refactors. The orchestrator plans directly into `.spec/<slug>/plan.md` using `sdd-plan`, pauses for your approval, and delegates execution and verification to a single `mini-sdd-developer` subagent.
 
-### Standalone Skills (`sharp-me`, `sdd-plan`, `sdd-debug`, `sdd-implement`, `sdd-review`, `pr-creation`)
+### Standalone Skills (`sharp-me`, `sdd-plan`, `sdd-debug`, `sdd-implement`, `sdd-review`, `pr-creation`, `writing-agents`, `writing-humans`)
 
 Each standalone skill works independently of the `/sdd` and `/mini-sdd` pipelines:
 
 - **Refine, plan, or debug first:** `sharp-me`, `sdd-plan`, and `sdd-debug` write their resulting plans to `.spec/<name>/plan.md` without touching project code.
 - **Execute on demand:** `sdd-implement` executes any `.spec/<name>/plan.md` (or external plan) in your current session or an isolated subagent, logging progress in `.spec/<name>/history.md`.
 - **Review independently:** `sdd-review` audits uncommitted changes, diffs, or files against project conventions and acceptance criteria in an isolated subagent.
+- **Improve writing:** `writing-agents` evaluates and corrects instructions while preserving their behavior. `writing-humans` improves text for people by removing needless repetition, artificial phrasing, and unnecessary complexity while preserving meaning, voice, and depth. It summarizes only when requested. Both evaluate before correcting.
 
 ---
 
