@@ -1,86 +1,85 @@
 ---
 name: writing-agents
 description: >
-  Evalúa y corrige instrucciones para agentes en AGENTS.md, CLAUDE.md,
-  SKILL.md, prompts y otros archivos Markdown. Usar al revisar, aclarar,
-  simplificar, compactar o deduplicar estos textos, conservando su
-  comportamiento. Evalúa primero y después aplica las correcciones.
-  Para textos destinados a personas, usar writing-humans.
+  Evaluate and correct agent instructions in AGENTS.md, CLAUDE.md, SKILL.md,
+  prompts, and other Markdown files. Use when reviewing, clarifying,
+  simplifying, condensing, or deduplicating these texts while preserving
+  their behavior. Evaluate first, then apply corrections. For texts intended
+  for people, use writing-humans.
 ---
 
 # Writing agents
 
-Hacé que las instrucciones sean concisas, claras y ejecutables. Conservá lo
-que el agente debe hacer, cuándo debe hacerlo y bajo qué restricciones.
-Reducir palabras sirve solo si mantiene esa precisión.
+Make instructions concise, clear, and executable. Preserve what the agent
+must do, when it must do it, and under which constraints. Reduce wording only
+when it preserves that precision.
 
-## Evaluar
+## Evaluate
 
-Leé la versión actual del texto completo y el contexto necesario para entender
-sus referencias. Conservá el idioma de cada fragmento, incluidos los textos
-mixtos; no traduzcas.
+Read the current version of the complete text and the context needed to
+understand its references. Preserve each passage's language, including
+mixed-language texts; do not translate.
 
-Inventariá cada directiva con su ubicación: acción, condición, alcance,
-obligación o permiso, prohibición, excepción, valor predeterminado, secuencia
-y formato de salida. Registrá la razón cuando el texto la dé. Si el pedido
-abarca varios archivos, el inventario debe incluirlos a todos.
+Inventory each directive with its location: action, condition, scope,
+obligation or permission, prohibition, exception, default value, sequence,
+and output format. Record the reason when the text provides one. If the
+request spans multiple files, the inventory must cover all of them.
 
-Identificá problemas concretos antes de editar:
+Identify concrete problems before editing:
 
-| Problema | Qué comprobar |
+| Problem | What to check |
 |---|---|
-| Repetición | Dos pasajes ordenan lo mismo con igual alcance y condiciones. |
-| Fragmentación | Una regla, sus condiciones o sus excepciones están separadas. |
-| Caso particular | Una regla general ya lo cubre; verificá si aporta un matiz antes de fusionarlo. |
-| Ambigüedad | No queda claro quién actúa, sobre qué, cuándo o con qué resultado. |
-| Terminología inconsistente | Varios nombres designan lo mismo o un nombre designa cosas diferentes. |
-| Relleno | Hay preámbulos, énfasis o justificaciones que solo reformulan una directiva. |
-| Contradicción | Dos instrucciones exigen comportamientos incompatibles bajo las mismas condiciones. |
+| Repetition | Two passages give the same instruction with the same scope and conditions. |
+| Fragmentation | A rule, its conditions, or its exceptions are separated. |
+| Specific case | A general rule already covers it; check whether it adds a nuance before merging. |
+| Ambiguity | It is unclear who acts, on what, when, or with what result. |
+| Inconsistent terminology | Several names refer to the same thing, or one name refers to different things. |
+| Filler | Preambles, emphasis, or justifications merely restate a directive. |
+| Contradiction | Two instructions require incompatible behavior under the same conditions. |
 
-La descripción del frontmatter, las plantillas que se copian literalmente y
-los ejemplos que muestran cómo aplicar una regla pueden necesitar repetir
-contenido. Evaluá su función antes de eliminarlos.
+The frontmatter description, templates copied verbatim, and examples showing
+how to apply a rule may need to repeat content. Evaluate their purpose before
+removing them.
 
-## Corregir
+## Correct
 
-Aplicá las correcciones después de evaluar; el diagnóstico no reemplaza la
-edición. Releé los archivos justo antes de modificarlos para trabajar sobre
-su versión actual.
+Apply corrections after evaluating; diagnosis does not replace editing.
+Reread files immediately before changing them to work on their current version.
 
-- Escribí instrucciones directas en imperativo. Conservá las prohibiciones
-  cuando expresen el límite con más precisión.
-- Reemplazá rodeos y referencias vagas por acciones y referentes explícitos
-  cuando el propio texto permita establecerlos.
-- Ubicá cada regla donde se necesita por primera vez; las reglas generales,
-  en la sección común. Mantené condiciones y excepciones junto a su regla.
-- Fusioná directivas equivalentes sin perder detalles. Agrupá instrucciones
-  paralelas solo si comparten acción, alcance y condiciones.
-- Definí los términos antes de usarlos y mantené sus nombres consistentes.
-- Conservá una justificación si ayuda a aplicar una regla a casos no listados;
-  eliminá las que solo la repiten.
-- Usá títulos, listas, tablas o bloques de código según lo que deba consultar
-  o copiar el agente. Conservá el frontmatter y la sintaxis de las plantillas.
+- Write direct instructions in the imperative. Keep prohibitions when they
+  express the boundary more precisely.
+- Replace roundabout wording and vague references with explicit actions and
+  referents when the text itself establishes them.
+- Place each rule where it is first needed, and general rules in the shared
+  section. Keep conditions and exceptions next to their rule.
+- Merge equivalent directives without losing details. Group parallel
+  instructions only when they share the action, scope, and conditions.
+- Define terms before using them and keep their names consistent.
+- Keep a justification if it helps apply a rule to unlisted cases; remove
+  justifications that merely repeat the rule.
+- Use headings, lists, tables, or code blocks according to what the agent
+  needs to consult or copy. Preserve frontmatter and template syntax.
 
-Al deduplicar entre archivos, comprobá que el agente tenga acceso al lugar
-donde queda la regla cuando la necesite. Moverla fuera de un archivo que se
-carga de forma independiente puede cambiar el comportamiento.
+When deduplicating across files, check that the agent can access the rule's
+remaining location when needed. Moving it out of a file loaded independently
+can change behavior.
 
-No inventes directivas ni completes condiciones por intuición. Conservá los
-pasajes ambiguos que no puedas aclarar con el texto y las instrucciones en
-contradicción; pedí al usuario la decisión necesaria en el reporte.
+Do not invent directives or fill in conditions by intuition. Preserve ambiguous
+passages that the text does not let you clarify and instructions in conflict;
+ask the user for the necessary decision in the report.
 
-## Verificar y entregar
+## Verify and deliver
 
-Rehacé el inventario sobre el resultado y comparalo con el original. Cada
-directiva debe seguir representada, sola o fusionada, con el mismo alcance,
-condiciones, excepciones y fuerza. Comprobá también la secuencia, los formatos
-de salida y las referencias. Restaurá cualquier detalle perdido y eliminá
-directivas introducidas durante la edición.
+Rebuild the inventory from the result and compare it with the original. Each
+directive must remain represented, separately or merged, with the same scope,
+conditions, exceptions, and strength. Also check the sequence, output formats,
+and references. Restore any lost detail and remove directives introduced
+during editing.
 
-Si recibiste archivos, dejá las correcciones en ellos y devolvé sus rutas.
-Si recibiste texto en el chat, entregá la versión corregida.
+If you received files, apply corrections to them and return their paths.
+If you received text in the chat, deliver the corrected version.
 
-Acompañá el resultado con un reporte breve: problemas encontrados y cambios
-aplicados, resultado de la verificación y cantidad de palabras antes y después.
-Si quedan ambigüedades o contradicciones, citá los pasajes y preguntá qué debe
-regir. No vuelques el inventario completo en el reporte.
+Accompany the result with a brief report: problems found and changes applied,
+verification results, and word counts before and after. If ambiguities or
+contradictions remain, quote the passages and ask which instruction should
+govern. Do not include the complete inventory in the report.
