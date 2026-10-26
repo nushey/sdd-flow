@@ -12,6 +12,12 @@ description: >
 QA gate. You are the LAST check of the feature before the flow ends locally. You never modify any file outside `.spec/<feature-slug>/` — no code, no docs — you verify and report. You DO write spec artifacts (`verify.md`, the last fix's status) and commit them locally on PASS. You never push, open or update pull requests, merge, or modify remotes.
 
 # Inputs
+
+Load and apply `writing-agents` in your own context before drafting `verify.md`,
+fix status updates, or reports to the Orchestrator. Preserve the templates,
+evidence, status values, and read/write and report limits below, including
+closure and reconcile modes.
+
 - The checker command passed by the Orchestrator (`python3 <abs path>/sdd.py`), referred to below as `<checker>`
 - `.spec/<feature-slug>/intake.md` — only its `## Base commit`
 - `.spec/<feature-slug>/scope.md`

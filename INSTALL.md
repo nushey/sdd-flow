@@ -5,7 +5,7 @@ It is **not** an MCP server — there is no process to spawn, no `command`/`args
 and nothing to register in an `mcpServers` block. sdd-flow ships two things:
 
 - **Skills** (`skills/<name>/SKILL.md`) — the orchestrator (`sdd`, `mini-sdd`) plus
-  standards and standalone tools (`sharp-me`, `pr-creation`, `sdd-plan`, `sdd-debug`, `sdd-implement`, `sdd-review`, `writing-agents`, `writing-humans`).
+  standards and standalone tools (`sharp-me`, `pr-creation`, `sdd-plan`, `sdd-debug`, `sdd-implement`, `sdd-code-review`, `sdd-acceptance-review`, `writing-agents`, `writing-humans`).
 - **Subagent prompts** (`agents/<name>.md`) — the five roles:
   `sdd-init`, `sdd-tech-lead`, `sdd-developer`, `sdd-verifier`, `mini-sdd-developer`.
 
@@ -95,7 +95,7 @@ curl -fsSL https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/instal
 
 ## Supported Clients & Paths
 
-All **9 full clients** receive both the **10 skills** and the **5 isolated role subagents**
+All **9 full clients** receive both the **11 skills** and the **5 isolated role subagents**
 (adapted to each harness's frontmatter/file format) in both **local** and **global** modes.
 The **`universal`** target installs skills only into `.agents/skills` / `~/.agents/skills`
 for additional `agentskills.io`-compatible harnesses.
@@ -123,12 +123,16 @@ for additional `agentskills.io`-compatible harnesses.
 
 Standalone `sharp-me`, `sdd-plan`, `sdd-debug`, `writing-agents`, and `writing-humans`
 require no subagents. The writing skills also require no repository or checker. `sharp-me` also works
-without a repository. `sdd-review` requires isolated subagent delegation, but no
+without a repository. `sdd-code-review` and `sdd-acceptance-review` require isolated subagent delegation, but no
 registered reviewer role. `sdd-implement` works in the current session or an
 isolated subagent, according to the user's choice, without a registered developer
 role or commits. `sharp-me` saves `brief.md`, `sdd-debug` saves `diagnosis.md`, and
 `sdd-plan` saves `plan.md` under `.spec/<name>/`; `sdd-implement` imports external
-plans there and records progress in a cumulative `history.md`. These standalone skills require no feature
+plans there and records progress in a cumulative `history.md`. The review skills save
+`code-review.md` and `acceptance-review.md` in the plan's `.spec/` folder, or create
+`.spec/<topic>/` when there is no plan. Acceptance review checks both ticket and
+plan when available, prioritizes the ticket for conflicts, and asks for criteria
+and waits when neither source nor user criteria are supplied. These standalone skills require no feature
 branch or checker. The following preconditions apply to `/sdd` and `/mini-sdd`:
 
 1. Your project **must have an `AGENTS.md`** at the root. SDD treats it as law and
@@ -227,7 +231,7 @@ custom agents from `.codex/agents/*.toml`.
 scripts/install.sh --client codex --global    # or --local
 ```
 
-**What lands:** 10 skills in `.agents/skills/` (or `~/.agents/skills/`) and 5 custom
+**What lands:** 11 skills in `.agents/skills/` (or `~/.agents/skills/`) and 5 custom
 agents in `.codex/agents/` (or `~/.codex/agents/`) as TOML with `name`, `description`,
 `developer_instructions`.
 
@@ -301,14 +305,14 @@ scripts/install.sh --client windsurf --global # or --local (alias: --client devi
 
 **What lands (local):**
 
-- 10 skills in `.devin/skills/`.
+- 11 skills in `.devin/skills/`.
 - 5 role subagents in `.devin/agents/*.md`. Custom subagents are a preview feature in
   Devin Desktop: enable **Subagents (Preview)** in settings.
 - `.devin/rules/sdd.md` and `.windsurfrules` (routing rule fallback).
 
 **What lands (global):**
 
-- 10 skills in `${XDG_CONFIG_HOME:-~/.config}/devin/skills/` (Windows: `%APPDATA%\devin\skills\`).
+- 11 skills in `${XDG_CONFIG_HOME:-~/.config}/devin/skills/` (Windows: `%APPDATA%\devin\skills\`).
 - 5 role subagents in `${XDG_CONFIG_HOME:-~/.config}/devin/agents/` (Windows: `%APPDATA%\devin\agents\`).
 
 **Invoke:** say `/sdd <feature>` or `/mini-sdd <change>`.
@@ -359,8 +363,9 @@ scripts/install.sh --client universal --global # or --local
 
 **Limitation (skills-only):** Standalone `sharp-me`, `sdd-plan`, `sdd-debug`,
 `writing-agents`, and `writing-humans` work anywhere;
-`sdd-implement` works in-session or with generic subagent delegation, and `sdd-review`
-works with generic subagent delegation. Full `/sdd` and `/mini-sdd` require the five
+`sdd-implement` works in-session or with generic subagent delegation, and
+`sdd-code-review` and `sdd-acceptance-review` work with generic subagent delegation.
+Full `/sdd` and `/mini-sdd` require the five
 registered role subagents and will stop at the start if installed via `universal` alone.
 
 ---
@@ -419,16 +424,16 @@ holds a `.sdd-flow-manifest` listing exactly what it installed there.
 **Project install** (run from the project root):
 
 ```bash
-rm -rf .agents/skills/{sdd,mini-sdd,sharp-me,sdd-plan,sdd-debug,sdd-implement,sdd-review,pr-creation,writing-agents,writing-humans} .agents/skills/.sdd-flow-manifest
-# Claude:      rm -rf .claude/skills/{sdd,mini-sdd,sharp-me,sdd-plan,sdd-debug,sdd-implement,sdd-review,pr-creation,writing-agents,writing-humans} .claude/skills/.sdd-flow-manifest .claude/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .claude/agents/.sdd-flow-manifest
+rm -rf .agents/skills/{sdd,mini-sdd,sharp-me,sdd-plan,sdd-debug,sdd-implement,sdd-code-review,sdd-acceptance-review,pr-creation,writing-agents,writing-humans} .agents/skills/.sdd-flow-manifest
+# Claude:      rm -rf .claude/skills/{sdd,mini-sdd,sharp-me,sdd-plan,sdd-debug,sdd-implement,sdd-code-review,sdd-acceptance-review,pr-creation,writing-agents,writing-humans} .claude/skills/.sdd-flow-manifest .claude/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .claude/agents/.sdd-flow-manifest
 # Gemini:      rm -f .gemini/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .gemini/agents/.sdd-flow-manifest
 # Codex:       rm -f .codex/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.toml .codex/agents/.sdd-flow-manifest
 # Opencode:    rm -f .opencode/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .opencode/agents/.sdd-flow-manifest
 # Kilo:        rm -f .kilo/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .kilo/agents/.sdd-flow-manifest
 # Cursor:      rm -f .cursor/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .cursor/agents/.sdd-flow-manifest
-# Windsurf:    rm -rf .devin/skills/{sdd,mini-sdd,sharp-me,sdd-plan,sdd-debug,sdd-implement,sdd-review,pr-creation,writing-agents,writing-humans} .devin/skills/.sdd-flow-manifest .devin/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .devin/agents/.sdd-flow-manifest .devin/rules/sdd.md .devin/rules/.sdd-flow-manifest .windsurfrules .sdd-flow-manifest
+# Windsurf:    rm -rf .devin/skills/{sdd,mini-sdd,sharp-me,sdd-plan,sdd-debug,sdd-implement,sdd-code-review,sdd-acceptance-review,pr-creation,writing-agents,writing-humans} .devin/skills/.sdd-flow-manifest .devin/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .devin/agents/.sdd-flow-manifest .devin/rules/sdd.md .devin/rules/.sdd-flow-manifest .windsurfrules .sdd-flow-manifest
 # Antigravity: rm -f .agents/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.md .agents/agents/.sdd-flow-manifest
-# Copilot:     rm -rf .github/skills/{sdd,mini-sdd,sharp-me,sdd-plan,sdd-debug,sdd-implement,sdd-review,pr-creation,writing-agents,writing-humans} .github/skills/.sdd-flow-manifest .github/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.agent.md .github/agents/.sdd-flow-manifest
+# Copilot:     rm -rf .github/skills/{sdd,mini-sdd,sharp-me,sdd-plan,sdd-debug,sdd-implement,sdd-code-review,sdd-acceptance-review,pr-creation,writing-agents,writing-humans} .github/skills/.sdd-flow-manifest .github/agents/{sdd-init,sdd-tech-lead,sdd-developer,sdd-verifier,mini-sdd-developer}.agent.md .github/agents/.sdd-flow-manifest
 ```
 
 **Global install** — remove the same pack entries under the user-level directories from

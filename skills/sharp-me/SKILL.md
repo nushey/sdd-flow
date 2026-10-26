@@ -8,7 +8,8 @@ description: >
   grilled on an idea before planning it. Preserve the
   intended outcome while improving how to achieve it. Refinement only; use
   sdd-plan to turn a brief into an implementation plan, sdd-debug to diagnose
-  a failure, and sdd-review to review code or acceptance compliance.
+  a failure, sdd-code-review for technical quality, and sdd-acceptance-review
+  for requirements compliance.
 ---
 
 # sharp-me
@@ -89,6 +90,9 @@ dependent decisions open and name the one to revisit; do not present the idea as
 ready to plan.
 
 ## Deliver the brief
+
+Load and apply `writing-agents` in this context before drafting the brief.
+Preserve the brief's scope, language, and delivery contract below.
 
 Finish when the decisions that shape the idea are settled and remaining
 uncertainties have an agreed resolution path. Do not try to explore every

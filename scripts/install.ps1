@@ -712,8 +712,8 @@ function Invoke-Hint($c) {
         'antigravity' { '  - [antigravity] Type /sdd <feature> or ask the agent to use the ''sdd'' skill.' }
         'copilot'     { '  - [copilot]     Ask Copilot to run /sdd <feature> (ensure runSubagent is enabled).' }
         'universal'   {
-            '  - [universal]   Skills-only install. sharp-me, sdd-plan, sdd-debug, sdd-implement, sdd-review, pr-creation,'
-            '                  writing-agents and writing-humans'
+            '  - [universal]   Skills-only install. sharp-me, sdd-plan, sdd-debug, sdd-implement,'
+            '                  sdd-code-review, sdd-acceptance-review, pr-creation, writing-agents and writing-humans'
             '                  work without role subagents; /sdd and /mini-sdd require them.'
         }
     }
