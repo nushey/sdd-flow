@@ -82,7 +82,7 @@ User: `/mini-sdd <task description>`
 
 ## Artifacts
 - `.spec/<slug>/plan.md`: The approved scope, design, tasks, and bootstrap contract. Never edited during execution.
-- `.spec/<slug>/history.md`: The persistent `## Base commit` full hash and the single record of execution progress — task hashes, acceptance criteria, checks, and the shared 3-attempt repair budget. A separate `sdd-review` request uses the plan as its acceptance source and an explicit `<base>..<end>` range as its implementation target; the stored base does not select the end commit or trigger a review.
+- `.spec/<slug>/history.md`: The persistent `## Base commit` full hash and the single record of execution progress — task hashes, acceptance criteria, checks, and the shared 3-attempt repair budget. A separate `sdd-acceptance-review` request uses the plan as its acceptance source and an explicit `<base>..<end>` range as its implementation target; the stored base does not select the end commit or trigger a review. That review saves `acceptance-review.md` in the plan's folder; `sdd-code-review` independently saves `code-review.md` there when reviewing this work.
 
 ## Why one subagent (and not zero)
 
