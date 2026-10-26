@@ -17,6 +17,10 @@ assigned the delegated reviewer role, follow the Reviewer workflow instead.
 Neither role fixes the implementation, creates branches, commits, or publishes
 changes. Writing the report is part of the review.
 
+In each role's own context, load and apply `writing-agents` before drafting
+delegation prompts or the review report. The delegated reviewer must load it
+itself. Preserve this skill's report template, evidence rules, and delivery contract.
+
 ## Invoking agent: prepare and delegate
 
 1. Establish the review target and requirements sources. Read the ticket and its

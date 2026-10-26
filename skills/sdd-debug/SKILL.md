@@ -42,6 +42,9 @@ List every concrete location (`path:line`) where the defect originates, propagat
 
 ## 3. Explain and save the diagnosis
 
+Load and apply `writing-agents` in this context before drafting `diagnosis.md`.
+Preserve the evidence distinctions, sections, and delivery contract below.
+
 Answer in chat with a short explanation anyone on the team can follow: what broke and why. Then save `.spec/<bug-slug>/diagnosis.md` in the workspace, creating the folder when needed. Write in the user's language, short and plain, with only these sections:
 
 - **What broke:** the observed failure and the flow inspected.

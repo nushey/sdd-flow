@@ -1,29 +1,65 @@
 ---
 name: writing-agents
 description: >
-  Evaluate and correct agent instructions in AGENTS.md, CLAUDE.md, SKILL.md,
-  prompts, and other Markdown files. Use when reviewing, clarifying,
-  simplifying, condensing, or deduplicating these texts while preserving
-  their behavior. Evaluate first, then apply corrections. For texts intended
-  for people, use writing-humans.
+  Create and revise instructions and operational content that agents use to
+  execute or coordinate work: AGENTS.md, CLAUDE.md, SKILL.md, prompts, plans,
+  briefs, diagnoses, tasks, histories, and reports. Apply proactively during
+  relevant writing tasks, without requiring an explicit invocation or an
+  existing draft. Preserve requirements, behavior, and evidence. For content
+  intended for people to understand, use writing-humans.
 ---
 
 # Writing agents
 
-Make instructions concise, clear, and executable. Preserve what the agent
-must do, when it must do it, and under which constraints. Reduce wording only
-when it preserves that precision.
+Make instructions and operational content concise, clear, and usable by agents.
+Preserve what the agent must do, when it must do it, and under which constraints,
+along with the context and evidence it needs. Reduce wording only when it
+preserves that precision.
 
-## Evaluate
+## Choose by purpose
+
+Use this skill for instructions agents execute and for context, decisions,
+evidence, and state they consume to continue work. This includes this plugin's
+plans, briefs, diagnoses, specifications, tasks, histories, and operational
+reports, even when a person also reviews or approves them.
+
+Choose by the content's consumer and purpose, not its author, file extension,
+or technical vocabulary. A README explaining a system to people or an explanation
+about agents belongs to `writing-humans`. In mixed documents, apply each skill
+to the sections serving its purpose. Apply this skill within the requested
+writing task; it does not authorize additional documents or work.
+
+## Prepare
+
+Identify whether the task is creation or revision, its purpose, consumer, scope,
+requirements, and output contract. Use the language specified by the request or
+producing workflow. When revising, preserve each passage's language, including
+mixed-language texts; do not translate.
+
+### Create
+
+Read the request and available source material, including the context needed to
+understand references. No existing draft is required. Identify the requested
+directives: action, condition, scope, obligation or permission, prohibition,
+exception, default value, sequence, and output format. Record the reason when
+provided. Identify the context, decisions, evidence, and state the consumer needs.
+For multiple outputs, cover the requirements of all of them.
+
+Separate confirmed decisions and demonstrated facts from hypotheses, missing
+evidence, and open questions. Do not turn descriptive material into commands.
+Organize the content so the agent can use it without unstated context.
+
+### Revise
 
 Read the current version of the complete text and the context needed to
-understand its references. Preserve each passage's language, including
-mixed-language texts; do not translate.
+understand its references.
 
 Inventory each directive with its location: action, condition, scope,
 obligation or permission, prohibition, exception, default value, sequence,
 and output format. Record the reason when the text provides one. If the
 request spans multiple files, the inventory must cover all of them.
+Also identify the operational context, decisions, evidence, state, and uncertainty
+that must survive the revision.
 
 Identify concrete problems before editing:
 
@@ -41,15 +77,17 @@ The frontmatter description, templates copied verbatim, and examples showing
 how to apply a rule may need to repeat content. Evaluate their purpose before
 removing them.
 
-## Correct
+## Write or correct
 
-Apply corrections after evaluating; diagnosis does not replace editing.
-Reread files immediately before changing them to work on their current version.
+For creation, draft from the established requirements and sources. For revision,
+apply corrections after evaluating; diagnosis does not replace editing. Reread
+existing files immediately before changing them to work on their current version.
 
-- Write direct instructions in the imperative. Keep prohibitions when they
-  express the boundary more precisely.
+- Write directives in the imperative. Keep prohibitions when they express the
+  boundary more precisely. Keep facts, hypotheses, decisions, and evidence in
+  their respective roles rather than rewriting them as directives.
 - Replace roundabout wording and vague references with explicit actions and
-  referents when the text itself establishes them.
+  referents when the request or sources establish them.
 - Place each rule where it is first needed, and general rules in the shared
   section. Keep conditions and exceptions next to their rule.
 - Merge equivalent directives without losing details. Group parallel
@@ -66,20 +104,36 @@ can change behavior.
 
 Do not invent directives or fill in conditions by intuition. Preserve ambiguous
 passages that the text does not let you clarify and instructions in conflict;
-ask the user for the necessary decision in the report.
+ask the user for the necessary decision in the report. During creation, ask for
+missing decisions that prevent faithful drafting instead of inventing them.
+Do not add unsupported facts or treat hypotheses as confirmed decisions.
 
 ## Verify and deliver
 
-Rebuild the inventory from the result and compare it with the original. Each
-directive must remain represented, separately or merged, with the same scope,
-conditions, exceptions, and strength. Also check the sequence, output formats,
-and references. Restore any lost detail and remove directives introduced
-during editing.
+For creation, compare the result with the request and sources. Check that it
+covers the required directives and operational content without unsupported
+additions. No original text or before/after inventory is required.
 
-If you received files, apply corrections to them and return their paths.
-If you received text in the chat, deliver the corrected version.
+For revision, rebuild the inventory from the result and compare it with the
+original. Each directive must remain represented, separately or merged, with the
+same scope, conditions, exceptions, and strength. Preserve operational context,
+decisions, evidence, state, and uncertainty. Restore any lost detail and remove
+unsupported additions introduced during editing.
 
-Accompany the result with a brief report: problems found and changes applied,
-verification results, and word counts before and after. If ambiguities or
-contradictions remain, quote the passages and ask which instruction should
-govern. Do not include the complete inventory in the report.
+In both modes, check sequence, output formats, references, and the distinction
+between facts, hypotheses, decisions, and instructions. Preserve required
+templates, headings, fields, IDs, status values, verbatim passages, languages,
+read/write limits, and report lengths. Writing quality does not authorize
+rewriting artifacts that the producing workflow requires preserving.
+
+Deliver the requested document in its specified file or in chat; return file
+paths when writing files. For a standalone revision, accompany the result with
+a brief report: problems found and changes applied, verification results, and
+word counts before and after. Do not include the complete inventory. For
+creation, deliver the document without a correction report or before/after
+counts. When integrated into another workflow, follow that workflow's output
+contract without appending a separate style report.
+
+If ambiguities or contradictions remain, quote the passages and ask which
+instruction should govern, using the producing workflow's question channel
+and report format when integrated.

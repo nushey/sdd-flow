@@ -91,6 +91,9 @@ ready to plan.
 
 ## Deliver the brief
 
+Load and apply `writing-agents` in this context before drafting the brief.
+Preserve the brief's scope, language, and delivery contract below.
+
 Finish when the decisions that shape the idea are settled and remaining
 uncertainties have an agreed resolution path. Do not try to explore every
 conceivable branch, require a fixed number of rounds, or keep interviewing after

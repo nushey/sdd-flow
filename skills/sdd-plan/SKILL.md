@@ -12,6 +12,9 @@ description: >
 
 Turn a defined request into a plan that someone can execute without guessing. Plan only: never implement code, create branches, commit, push, or delegate to subagents.
 
+Load and apply `writing-agents` in this context before drafting the plan or its
+operational handoff. Preserve this skill's plan format and delivery contract.
+
 ## Modes
 
 - **Standalone** (the user asks for a plan): save the plan to `.spec/<plan-name>/plan.md`, using a name that identifies the plan, then return its path and stop. Create the folder when needed.

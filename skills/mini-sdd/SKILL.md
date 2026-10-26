@@ -40,6 +40,10 @@ If the task is larger or architecturally fragile, use the full `/sdd` flow inste
 
 ## Phases
 
+Load and apply `writing-agents` in the Orchestrator's context before writing
+history entries or delegation prompts. Preserve this flow's artifact contracts;
+`sdd-plan` writes the plan and the Developer loads its own writing skill.
+
 ### Phase 0: Setup (Orchestrator)
 1. Derive a `feature-slug` (kebab-case). If the user names a `brief.md` or `diagnosis.md`, or one was produced earlier in this conversation, use its `.spec/` folder name.
 2. **Base commit (before the branch check):** persist the full hash under `## Base commit` in `.spec/<feature-slug>/history.md`, creating the folder and history when needed without changing existing entries or `plan.md`.

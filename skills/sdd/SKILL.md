@@ -22,6 +22,11 @@ SDD's value is **context isolation**. Each phase MUST run in a separate subagent
 
 **Hard rules for the Orchestrator:**
 
+Load and apply `writing-agents` in the Orchestrator's context before drafting
+`intake.md` or delegation prompts. Preserve this flow's artifact and report
+contracts and its read/write limits. Each delegated role loads the writing
+skill in its own context.
+
 1. **Every subagent phase below MUST be executed by delegating to a subagent.** Writing `scope.md`, `design.md`, task files, or production code yourself is a protocol violation — stop and delegate.
 2. **Reading limits.** Phase 0 reads `AGENTS.md` (and `CLAUDE.md`) and the codebase for triage. From Phase 1 on, you MUST NOT read `scope.md`, `design.md`, individual task files, fix files, `verify.md`, or `AGENTS.md` — only the **short report string** each subagent returns, plus `tasks.index.md`. You may list file names under `tasks/` and `fixes/` without opening them. **One exception:** read the short output of the checker (see **Checker**). It is the only way you learn the state of `verify.md`.
 3. **You MUST NOT create or modify `AGENTS.md`.** It is a user-provided precondition. `sdd-init` (Phase 1) checks for it and fails fast if it is missing.
