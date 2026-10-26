@@ -42,11 +42,15 @@ If the task is larger or architecturally fragile, use the full `/sdd` flow inste
 
 ### Phase 0: Setup (Orchestrator)
 1. Derive a `feature-slug` (kebab-case). If the user names a `brief.md` or `diagnosis.md`, or one was produced earlier in this conversation, use its `.spec/` folder name.
-2. **Branch check (before the resume check):** the feature branch is `feature/<feature-slug>`. Uncommitted changes under `.spec/<feature-slug>/` are this flow's own progress; any other uncommitted change is foreign. Never stash, reset, or discard anything yourself.
+2. **Base commit (before the branch check):** persist the full hash under `## Base commit` in `.spec/<feature-slug>/history.md`, creating the folder and history when needed without changing existing entries or `plan.md`.
+   - If the history already records a base, reuse it on resume.
+   - If the feature branch does not exist and no base is recorded, capture `git rev-parse HEAD` before creating the branch.
+   - If the feature branch exists without a recorded base, ask the user for an explicit local commit or ref. Resolve it with `git rev-parse --verify <ref>^{commit}` and require `git merge-base --is-ancestor <hash> feature/<feature-slug>` before recording it. Never infer the base from a remote, upstream, or first task commit.
+3. **Branch check (before the resume check):** the feature branch is `feature/<feature-slug>`. Uncommitted changes under `.spec/<feature-slug>/` are this flow's own progress; any other uncommitted change is foreign. Never stash, reset, or discard anything yourself.
    - Already on `feature/<feature-slug>` → continue.
    - On another branch with foreign changes → STOP and ask the user to commit or stash them; switching would carry them onto the feature branch.
    - On another branch otherwise → check out `feature/<feature-slug>`, creating it if missing. If git refuses, STOP and report its error.
-3. **Resume check:** if `.spec/<feature-slug>/plan.md` already exists, do NOT recreate or overwrite it. Skip planning, ask the user to approve the existing plan (Phase 1 step 3), then go to Phase 2 — the developer resumes from the tasks and repair budget recorded in `.spec/<feature-slug>/history.md`.
+4. **Resume check:** if `.spec/<feature-slug>/plan.md` already exists, do NOT recreate or overwrite it. Skip planning, ask the user to approve the existing plan (Phase 1 step 3), then go to Phase 2 — the developer resumes from the tasks and repair budget recorded in `.spec/<feature-slug>/history.md`.
 
 ### Phase 1: Planning (Orchestrator)
 1. Load the `sdd-plan` skill in Mini-SDD mode, with `.spec/<feature-slug>/plan.md` as the plan path.
@@ -59,7 +63,7 @@ The Orchestrator delegates to the `mini-sdd-developer` subagent. The subagent:
 2. Honors the plan's `Bootstrap` section (loads declared skills, re-invokes declared MCP tools).
 3. Executes ALL tasks in `plan.md` sequentially, committing each with conventional commits.
 4. Runs final verification (tests, acceptance criteria, post-implementation validations declared in `Bootstrap`), repairing within a budget of 3 attempts per feature that survives new sessions.
-5. Records tasks, checks, and repairs in `history.md`, never in `plan.md`, and commits `history.md` last.
+5. Preserves `## Base commit`, records tasks, checks, and repairs in `history.md`, never in `plan.md`, and commits `history.md` last.
 6. Returns a structured report to the Orchestrator.
 
 The flow ends after this local verification. No role pushes, opens or updates pull requests, merges, or modifies remotes. Publishing is a separate action the user takes outside Mini-SDD.
@@ -78,7 +82,7 @@ User: `/mini-sdd <task description>`
 
 ## Artifacts
 - `.spec/<slug>/plan.md`: The approved scope, design, tasks, and bootstrap contract. Never edited during execution.
-- `.spec/<slug>/history.md`: The single record of execution progress — task hashes, acceptance criteria, checks, and the shared 3-attempt repair budget.
+- `.spec/<slug>/history.md`: The persistent `## Base commit` full hash and the single record of execution progress — task hashes, acceptance criteria, checks, and the shared 3-attempt repair budget. A separate `sdd-review` request uses the plan as its acceptance source and an explicit `<base>..<end>` range as its implementation target; the stored base does not select the end commit or trigger a review.
 
 ## Why one subagent (and not zero)
 

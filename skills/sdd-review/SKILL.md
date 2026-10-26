@@ -18,6 +18,10 @@ agent fixes code, creates branches, commits, or pushes as part of the review.
 1. Establish the scope using the table below. Resolve ambiguity and missing
    acceptance requirements with the user before delegation; ask one question
    at a time and wait for the answer.
+   For a Mini-SDD acceptance review, use `plan.md` and its `AC-NNN` IDs as the
+   acceptance source, and an explicit `<base>..<end>` commit range as the review
+   target. Read the persisted base from `history.md`; establish the end commit
+   explicitly with the user. The base alone does not define the review range.
 2. Improve the user's query into a self-contained review prompt: make the target,
    selected checks, and supplied context explicit without changing intent, adding
    requirements, or prescribing findings. Preserve the original query alongside
@@ -78,6 +82,11 @@ For acceptance review, identify the original request or supplied acceptance
 criteria. Request them through the invoking agent when missing; never infer
 requirements from the code.
 
+For Mini-SDD acceptance review, read the supplied `plan.md` for its `AC-NNN`
+requirements and inspect the supplied commit range for implementation evidence.
+Keep these scopes separate; the developer's report or recorded AC statuses do not
+prove acceptance compliance.
+
 ## 2. Research the actual implementation
 
 - Read the project's applicable `AGENTS.md` and `CLAUDE.md` when present. Load
@@ -107,8 +116,9 @@ Do not recommend reuse merely because two pieces of code look similar.
 ### Code quality
 
 Check Clean Code: readable method and variable names, understandable control flow,
-focused methods, comments, and magic strings. Flag comments against the requested
-no-comments standard, honoring explicit documentation requirements in project rules.
+focused methods, comments, and magic strings. Evaluate comments against explicit
+rules in the project or review request, including documentation requirements;
+do not presume that every review requests a no-comments standard.
 Distinguish meaningful literals from unexplained strings encoding domain rules or
 repeated contracts; do not demand a constant for every string.
 

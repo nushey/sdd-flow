@@ -85,6 +85,8 @@ Full SDD includes a deterministic local checker (`skills/sdd/scripts/sdd check <
 
 Designed for smaller features, bug fixes, and contained refactors. The orchestrator plans directly into `.spec/<slug>/plan.md` using `sdd-plan`, pauses for your approval, and delegates execution and verification to a single `mini-sdd-developer` subagent.
 
+Mini-SDD saves the full base commit under `## Base commit` in `.spec/<slug>/history.md` before implementation and reuses it on resume. For a new branch, it captures HEAD before creating the branch. An existing branch without a recorded base requires an explicit local commit or ref from you, verified as an ancestor of the feature branch. Execution appends to the history while preserving that base and the approved plan.
+
 ### Standalone Skills (`sharp-me`, `sdd-plan`, `sdd-debug`, `sdd-implement`, `sdd-review`, `pr-creation`, `writing-agents`, `writing-humans`)
 
 Each standalone skill works independently of the `/sdd` and `/mini-sdd` pipelines:
@@ -94,6 +96,14 @@ Each standalone skill works independently of the `/sdd` and `/mini-sdd` pipeline
 - **Execute on demand:** `sdd-implement` executes any `.spec/<name>/plan.md` (or external plan) in your current session or an isolated subagent. Both it and Mini-SDD record progress only in `.spec/<name>/history.md`.
 - **Review independently:** `sdd-review` audits uncommitted changes, diffs, or files against project conventions and acceptance criteria in an isolated subagent.
 - **Improve writing:** `writing-agents` evaluates and corrects instructions while preserving their behavior. `writing-humans` improves text for people by removing needless repetition, artificial phrasing, and unnecessary complexity while preserving meaning, voice, and depth. It summarizes only when requested. Both evaluate before correcting.
+
+To review a Mini-SDD implementation independently, supply the plan as the acceptance source and a commit range as the implementation target:
+
+```text
+/sdd-review Check acceptance against .spec/<slug>/plan.md (all AC-NNN IDs) for <base>..<end>.
+```
+
+Replace `<base>` with the hash saved in `history.md` and `<end>` with the explicit commit you want reviewed. The reviewer checks the plan's criteria against the actual diff, implementation, and relevant checks; the developer's report does not establish compliance. Mini-SDD does not invoke this review automatically.
 
 ---
 

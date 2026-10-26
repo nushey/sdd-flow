@@ -35,7 +35,7 @@ That's it. Anything else you need must be derivable from the plan or from files 
 
 ### 1. Sequential Task Execution
 
-`.spec/<feature-slug>/history.md` is the only record of progress; `plan.md` is never edited. Read its latest entry if the file exists, then append this run's entry, omitting empty lines:
+`.spec/<feature-slug>/history.md` is the only record of progress; `plan.md` is never edited. Read the history, preserve the Orchestrator's `## Base commit` section and full hash unchanged, then append this run's entry, omitting empty lines:
 
 ```markdown
 ## Run <n> — <YYYY-MM-DD> — mini-sdd
