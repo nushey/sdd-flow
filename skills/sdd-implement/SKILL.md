@@ -17,6 +17,11 @@ plan, use the original as an execution log, or create commits. Do not ask whethe
 to commit. Full SDD and Mini-SDD keep their own execution workflows; this skill
 is an independent way to implement a plan.
 
+In either execution mode, load and apply `writing-agents` in the writer's own
+context before drafting history entries, delegation prompts, or execution
+reports. A delegated developer must load it itself. Preserve the original plan,
+history format, and delivery contract defined here.
+
 ## Prepare the execution with the user
 
 Read the supplied plan in full. Accept any format, from a file or the

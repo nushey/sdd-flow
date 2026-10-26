@@ -1,14 +1,13 @@
 ---
 name: writing-humans
 description: >
-  Evaluate and correct texts intended for people so they are clear, natural,
-  precise, and coherent. Use when reviewing, rewriting, or improving documents,
-  theoretical or technical material, explanations, reports, emails, summaries,
-  and presentations, or drafting them from source material. Remove repetition,
-  empty phrases, artificial language, and unnecessary complexity without losing
-  information or imposing brevity or informality. Evaluate first, then apply
-  corrections. For instructions executed by agents in AGENTS.md, SKILL.md, or
-  prompts, use writing-agents.
+  Create and revise texts intended for people: documents, theoretical or
+  technical material, explanations, reports, emails, summaries, and
+  presentations. Apply proactively during relevant writing tasks, from a
+  request or source material, without requiring an explicit invocation or an
+  existing draft. Write clearly, naturally, precisely, and coherently while
+  preserving meaning, voice, and depth. For instructions and operational
+  content agents use to execute or coordinate work, use writing-agents.
 ---
 
 # Writing humans
@@ -17,13 +16,35 @@ Write clear, natural text for its reader. Improve expression without changing
 meaning, intent, or the necessary depth. Length, register, and structure should
 serve the text's purpose and audience.
 
-## Evaluate
+## Choose by purpose
 
-Read the current version of the text and the available source material.
-Identify what the user requested: correcting, rewriting, drafting, or
+Use this skill when the content serves a person's understanding, including
+README explanations, technical documentation, and explanations about agents.
+Choose by consumer and purpose, not author, file extension, or technical
+vocabulary. Instructions, plans, briefs, diagnoses, tasks, histories, and reports
+that agents consume to execute or coordinate work belong to `writing-agents`,
+even when a person also reviews them. In mixed documents, apply each skill to
+the sections serving its purpose. Apply this skill within the requested writing
+task; it does not authorize additional documents or work.
+
+## Prepare
+
+Identify what the user requested: creating, correcting, rewriting, or
 summarizing. Identify the purpose, scope, audience, and voice established by
-the request and the text. Preserve each passage's language, including
-mixed-language texts; do not translate.
+the request and available material. Use the requested language; when revising,
+preserve each passage's language, including mixed-language texts. Do not translate.
+
+### Create
+
+Read the request and available sources. No existing draft is required. Identify
+the ideas to develop, their support, and the requested scope and format. Organize
+them for the intended reader, distinguishing established information from
+uncertainty. Ask for missing information that prevents faithful drafting rather
+than inventing it.
+
+### Revise
+
+Read the current version of the complete text and the available source material.
 
 Identify ideas, arguments, and their relationships: what is claimed, how it
 is explained or supported, and what is concluded. Identify the definitions,
@@ -41,16 +62,16 @@ Look for concrete problems before editing:
 - Contradictions, claims unsupported by the material, and gaps that the material
   does not let you resolve.
 
-## Correct
+## Write or correct
 
-Apply corrections after evaluating; diagnosis does not replace the final
-text. Reread files immediately before changing them to work on their current
-version.
+For creation, draft from the request and available sources. For revision, apply
+corrections after evaluating; diagnosis does not replace the final text. Reread
+existing files immediately before changing them to work on their current version.
 
 When reviewing or rewriting, preserve the text's information and development.
 Summarize or cut content only when the request calls for it; a style review
-does not authorize discarding ideas as secondary. When producing text from
-source material, respect the requested scope and format.
+does not authorize discarding ideas as secondary. When creating text from a
+request or source material, respect the requested scope and format.
 
 - Order ideas so the reader can follow the reasoning. Place each explanation
   near what it develops and make relationships explicit when the material
@@ -89,20 +110,23 @@ clarification in the report.
 
 ## Verify and deliver
 
-Compare the result with the source material. Check that ideas and their
-relationships are understandable, arguments retain their meaning, and no
-facts were added or conditions, nuances, or references lost. When correcting,
-verify that each idea remains represented; when summarizing at the user's
+Compare the result with the request and available source material. Check that
+ideas and their relationships are understandable, arguments retain their meaning,
+and no unsupported facts were added or conditions, nuances, or references lost.
+When revising, also check that no facts were added and each idea remains
+represented; when summarizing at the user's
 request, check that concepts within the requested scope are covered. Restore
 lost content and remove unsupported additions. Read the result through to
-detect mechanical phrases, forced transitions, and changes in voice.
+detect mechanical phrases, forced transitions, and changes in voice. For creation,
+verify coverage of the requested ideas and format without requiring an original.
 
 If you received files to correct, apply corrections to them and return their
-paths. If you received text in the chat or source material, deliver the
-requested text.
+paths. For creation, write to the requested destination and return its path, or
+deliver the requested text in chat.
 
-Accompany the result with a brief report: problems found and changes applied,
-verification results, and word counts before and after. Word counts are
-informative, not a reduction target. If contradictions, ambiguities, or
+For revision, accompany the result with a brief report: problems found and changes
+applied, verification results, and word counts before and after. Word counts are
+informative, not a reduction target. For creation, deliver the document without
+a correction report or before/after counts. If contradictions, ambiguities, or
 unsupported arguments remain, quote the passages and ask what is needed to
 resolve them.

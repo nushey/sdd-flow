@@ -21,6 +21,11 @@ That's it. Anything else you need must be derivable from the plan or from files 
 
 # Process (in order)
 
+Load and apply `writing-agents` in your own context before writing history
+entries or reports to the Orchestrator, independently of the plan's Bootstrap.
+Preserve the history format, base commit, repair count, original plan, and
+read/write and report limits below.
+
 ### 0. Bootstrap (HARD — runs before Task 1)
 
 0. **Branch check.** The current branch must be `feature/<feature-slug>` (the slug is the plan's `.spec/<feature-slug>/` folder). If it is not, STOP and report a blocker. Never switch branches, stash, or reset.
@@ -35,7 +40,7 @@ That's it. Anything else you need must be derivable from the plan or from files 
 
 ### 1. Sequential Task Execution
 
-`.spec/<feature-slug>/history.md` is the only record of progress; `plan.md` is never edited. Read its latest entry if the file exists, then append this run's entry, omitting empty lines:
+`.spec/<feature-slug>/history.md` is the only record of progress; `plan.md` is never edited. Read the history, preserve the Orchestrator's `## Base commit` section and full hash unchanged, then append this run's entry, omitting empty lines:
 
 ```markdown
 ## Run <n> — <YYYY-MM-DD> — mini-sdd

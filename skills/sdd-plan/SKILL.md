@@ -12,6 +12,9 @@ description: >
 
 Turn a defined request into a plan that someone can execute without guessing. Plan only: never implement code, create branches, commit, push, or delegate to subagents.
 
+Load and apply `writing-agents` in this context before drafting the plan or its
+operational handoff. Preserve this skill's plan format and delivery contract.
+
 ## Modes
 
 - **Standalone** (the user asks for a plan): save the plan to `.spec/<plan-name>/plan.md`, using a name that identifies the plan, then return its path and stop. Create the folder when needed.
@@ -21,9 +24,9 @@ Both modes write the same plan format.
 
 ## Inputs
 
-A `brief.md` from `sharp-me` or a `diagnosis.md` from `sdd-debug` is input, not a plan. When the user names one, or one was produced earlier in this conversation, read it, treat its decisions as settled, and write `plan.md` in the same `.spec/<name>/` folder. If more than one could apply, ask which.
+A `brief.md` from `sharp-me` or a `diagnosis.md` from `sdd-debug` is input, not a plan. When the user names one, or one was produced earlier in this conversation, read it, reuse its settled decisions, and write `plan.md` in the same `.spec/<name>/` folder. If more than one could apply, ask which.
 
-From a diagnosis, the plan fixes the root cause at every affected point it lists. If an existing contract forces a symptom patch instead, raise it with the user before writing.
+From a diagnosis, preserve the distinction between demonstrated causes, pending hypotheses, and missing evidence. Do not treat hypotheses as facts or approved decisions. Resolve missing evidence that blocks the plan with the user under section 2; do not reopen settled decisions. The plan fixes the demonstrated root cause at every affected point it lists. If an existing contract forces a symptom patch instead, raise it with the user before writing.
 
 ## 1. Research first
 

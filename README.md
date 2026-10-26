@@ -37,10 +37,11 @@ Instead of jumping straight from a prompt to unreviewed code, it persists specif
 | `sdd-plan` | `/sdd-plan <request>` | Writes a proportional implementation plan to `.spec/<name>/plan.md` without modifying code, reading a brief or diagnosis as input when one applies; also serves as Mini-SDD's planner. |
 | `sdd-debug` | `/sdd-debug <issue>` | Investigates a failure in the current session, proves the root cause, maps all affected points across callers and interacting modules, and explains what broke and why in `.spec/<bug-slug>/diagnosis.md`. |
 | `sdd-implement` | `/sdd-implement <plan>` | Implements all or selected points of any plan in the current session or an isolated subagent, tracking runs in `.spec/<name>/history.md` without creating commits. |
-| `sdd-review` | `/sdd-review <request>` | Delegates code quality review, acceptance compliance review, or both to an isolated reviewer subagent without modifying code. |
+| `sdd-code-review` | `/sdd-code-review <request>` | Reviews technical quality, tests, reuse, conventions, bugs, security, and data integrity in an isolated subagent; saves `code-review.md` under `.spec/`. |
+| `sdd-acceptance-review` | `/sdd-acceptance-review <request>` | Checks implementation against the ticket, plan, or supplied criteria in an isolated subagent; saves `acceptance-review.md` under `.spec/`. |
 | `pr-creation` | `/pr-creation` | Formats pull request descriptions around user value and essential reviewer context when explicitly requested. |
-| `writing-agents` | `/writing-agents <text or files>` | Evaluates and corrects agent instructions in Markdown, preserving behavior while improving clarity and concision. |
-| `writing-humans` | `/writing-humans <text or material>` | Evaluates and corrects human-facing writing for clarity, natural language, and coherent arguments while preserving meaning and depth. |
+| `writing-agents` | `/writing-agents <request, text, or files>` | Creates and revises instructions and operational content agents use to execute or coordinate work, preserving requirements, behavior, and evidence. Applies proactively during relevant writing tasks. |
+| `writing-humans` | `/writing-humans <request, text, or material>` | Creates and revises text for people to understand, preserving meaning, voice, and depth. Applies proactively during relevant writing tasks. |
 
 ### Role Subagents
 
@@ -85,15 +86,29 @@ Full SDD includes a deterministic local checker (`skills/sdd/scripts/sdd check <
 
 Designed for smaller features, bug fixes, and contained refactors. The orchestrator plans directly into `.spec/<slug>/plan.md` using `sdd-plan`, pauses for your approval, and delegates execution and verification to a single `mini-sdd-developer` subagent.
 
-### Standalone Skills (`sharp-me`, `sdd-plan`, `sdd-debug`, `sdd-implement`, `sdd-review`, `pr-creation`, `writing-agents`, `writing-humans`)
+Mini-SDD saves the full base commit under `## Base commit` in `.spec/<slug>/history.md` before implementation and reuses it on resume. For a new branch, it captures HEAD before creating the branch. An existing branch without a recorded base requires an explicit local commit or ref from you, verified as an ancestor of the feature branch. Execution appends to the history while preserving that base and the approved plan.
+
+### Standalone Skills (`sharp-me`, `sdd-plan`, `sdd-debug`, `sdd-implement`, `sdd-code-review`, `sdd-acceptance-review`, `pr-creation`, `writing-agents`, `writing-humans`)
 
 Each standalone skill works independently of the `/sdd` and `/mini-sdd` pipelines:
 
 - **Refine or debug first:** `sharp-me` turns an idea into `.spec/<name>/brief.md`; `sdd-debug` explains a failure in `.spec/<bug-slug>/diagnosis.md`. Neither touches project code.
 - **Plan:** `sdd-plan` is the only skill that writes `.spec/<name>/plan.md`, reading the brief or diagnosis in that folder as input. The plan is never edited during execution.
 - **Execute on demand:** `sdd-implement` executes any `.spec/<name>/plan.md` (or external plan) in your current session or an isolated subagent. Both it and Mini-SDD record progress only in `.spec/<name>/history.md`.
-- **Review independently:** `sdd-review` audits uncommitted changes, diffs, or files against project conventions and acceptance criteria in an isolated subagent.
-- **Improve writing:** `writing-agents` evaluates and corrects instructions while preserving their behavior. `writing-humans` improves text for people by removing needless repetition, artificial phrasing, and unnecessary complexity while preserving meaning, voice, and depth. It summarizes only when requested. Both evaluate before correcting.
+- **Review independently:** `sdd-code-review` evaluates technical quality; `sdd-acceptance-review` checks fulfillment of the ticket and plan, prioritizing the ticket where they conflict. Without either source or supplied criteria, acceptance review asks for criteria and waits. Each delegates to an isolated subagent and saves its report in the plan's `.spec/` folder, or creates `.spec/<topic>/` when there is no plan. Neither fixes the implementation.
+- **Write or revise:** `writing-agents` creates and revises instructions and operational content for agents; `writing-humans` creates and revises text for people to understand, preserving meaning, voice, and depth. Both apply proactively within a requested writing task, without requiring an explicit invocation or a prior draft. Creation starts from the request and available sources; revision evaluates the existing text before correcting it. `writing-humans` summarizes only when requested. New documents do not require correction reports or before/after word counts.
+
+Choose the writing skill by the content's consumer and purpose, not its author or file extension. A plan or brief that guides another agent belongs to `writing-agents`, even when a person approves it. A README explanation, a report for people, or an explanation about agents belongs to `writing-humans`. Mixed documents use each skill for the sections serving its purpose.
+
+All plugin skills and roles that produce operational artifacts or handoffs must load and apply `writing-agents` in their own writing context. This covers plans, briefs, diagnoses, specifications, tasks, histories, review reports, and execution reports, including isolated subagents. Each producer preserves its templates, evidence, IDs, status values, languages, and access limits; the writing skill does not add a separate style report to its output.
+
+To review a Mini-SDD implementation independently, supply the plan as the acceptance source and a commit range as the implementation target:
+
+```text
+/sdd-acceptance-review Check acceptance against .spec/<slug>/plan.md (all AC-NNN IDs) for <base>..<end>.
+```
+
+Replace `<base>` with the hash saved in `history.md` and `<end>` with the explicit commit you want reviewed. The reviewer checks the plan's criteria against the actual diff, implementation, and relevant checks; the developer's report does not establish compliance. Mini-SDD does not invoke this review automatically.
 
 ---
 
