@@ -70,7 +70,7 @@ sync_branch main
 echo "Releasing $source_branch: $current -> $version"
 
 step "Pushing $source_branch"
-git push -u origin "$source_branch"
+git push --force-with-lease -u origin "$source_branch"
 
 step "Merging $source_branch into dev"
 git checkout dev
