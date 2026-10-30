@@ -5,116 +5,14 @@
 </p>
 
 <p align="center">
-  <code>Agent Skills pack</code> · <a href="https://agentskills.io">agentskills.io</a>-compliant · Python 3.11+ for the local checker · zero runtime server
-</p>
-
-<p align="center">
-  <a href="#overview">Overview</a> &bull;
-  <a href="#what-it-provides">What It Provides</a> &bull;
-  <a href="#workflows">Workflows</a> &bull;
-  <a href="#install">Install</a>
+  <a href="https://agentskills.io">agentskills.io</a>-compliant skills pack · no server to run
 </p>
 
 ---
 
-## Overview
-
-`sdd-flow` brings structured engineering workflows to coding agents through plain Markdown skills (`skills/<name>/SKILL.md`) and role subagents (`agents/<name>.md`).
-
-Instead of jumping straight from a prompt to unreviewed code, it persists specifications and plans under `.spec/` and delegates execution phases to isolated, cold-context subagents. Every agent reads your project's `AGENTS.md` (and `CLAUDE.md` when present) as its source of truth, and every workflow ends locally without pushing, opening PRs, or touching remotes.
-
----
-
-## What It Provides
-
-### Skills
-
-| Skill | Invocation | Purpose |
-|-------|------------|---------|
-| `sdd` | `/sdd <feature>` | Full SDD orchestrator: triages scope, writes `.spec/<slug>/` artifacts, and delegates each phase to an isolated subagent. |
-| `mini-sdd` | `/mini-sdd <change>` | Lean SDD flow for small changes: plans in the orchestrator (`sdd-plan`) and delegates implementation to one cold-context developer subagent. |
-| `sharp-me` | `/sharp-me <idea>` | Grills an idea through research, focused questions, and tradeoff recommendations until it is a well-defined concept; saves `.spec/<name>/brief.md`. |
-| `sdd-plan` | `/sdd-plan <request>` | Writes a proportional implementation plan to `.spec/<name>/plan.md` without modifying code, reading a brief or diagnosis as input when one applies; also serves as Mini-SDD's planner. |
-| `sdd-debug` | `/sdd-debug <issue>` | Investigates a failure in the current session, proves the root cause, maps all affected points across callers and interacting modules, and explains what broke and why in `.spec/<bug-slug>/diagnosis.md`. |
-| `sdd-implement` | `/sdd-implement <plan>` | Implements all or selected points of any plan in the current session or an isolated subagent, tracking runs in `.spec/<name>/history.md` without creating commits. |
-| `sdd-code-review` | `/sdd-code-review <request>` | Reviews technical quality, tests, reuse, conventions, bugs, security, and data integrity in an isolated subagent; saves `code-review.md` under `.spec/`. |
-| `sdd-acceptance-review` | `/sdd-acceptance-review <request>` | Checks implementation against the ticket, plan, or supplied criteria in an isolated subagent; saves `acceptance-review.md` under `.spec/`. |
-| `pr-creation` | `/pr-creation` | Formats pull request descriptions around user value and essential reviewer context when explicitly requested. |
-| `writing-agents` | `/writing-agents <request, text, or files>` | Creates and revises instructions and operational content agents use to execute or coordinate work, preserving requirements, behavior, and evidence. Applies proactively during relevant writing tasks. |
-| `writing-humans` | `/writing-humans <request, text, or material>` | Creates and revises text for people to understand, preserving meaning, voice, and depth. Applies proactively during relevant writing tasks. |
-
-### Role Subagents
-
-Used by `/sdd` and `/mini-sdd` for cold-context phase isolation:
-
-| Subagent | Role |
-|----------|------|
-| `sdd-init` | Verifies `AGENTS.md` exists and refines `intake.md` into `scope.md` with stable `AC-NNN` acceptance IDs. |
-| `sdd-tech-lead` | Writes `design.md`, `tasks.index.md`, and atomic task files under `tasks/` (or `fixes/` during failure recovery). |
-| `sdd-developer` | Implements one Full SDD task per run, commits with conventional commits, and records the implementation log. |
-| `sdd-verifier` | Validates git history against task logs, runs tests, verifies every `AC-NNN`, and commits spec artifacts locally on pass. |
-| `mini-sdd-developer` | Executes all tasks in a Mini-SDD `plan.md` in a fresh context after loading its declared bootstrap skills and MCP tools. |
-
----
-
-## Workflows
-
-### Full SDD (`/sdd`)
-
-Designed for larger features and architectural changes:
-
-1. **Triage** — Clarifies scope and reference files; writes `.spec/<slug>/intake.md`.
-2. **Init (`sdd-init`)** — Produces `.spec/<slug>/scope.md` with testable `AC-NNN` criteria.
-3. **Design & Tasks (`sdd-tech-lead`)** — Produces `design.md`, `tasks/<n>-<slug>.md`, and `tasks.index.md`, validated by `sdd check --phase plan`.
-4. **Implement (`sdd-developer`)** — Runs one subagent per task; one task equals one commit.
-5. **Verify (`sdd-verifier`)** — Runs tests and checks the diff against `scope.md` (up to 3 fix cycles via `fixes/`). Commits `.spec/<slug>/` locally on pass.
-
-```text
-.spec/<feature-slug>/
-├── intake.md
-├── scope.md
-├── design.md
-├── tasks.index.md
-├── tasks/<n>-<slug>.md
-├── fixes/<n>-<slug>.md
-└── verify.md
-```
-
-Full SDD includes a deterministic local checker (`skills/sdd/scripts/sdd check <slug> --phase resume|scope|plan|verify`) that validates file structure, acceptance coverage, and commit hashes using the Python 3.11+ standard library.
-
-### Mini-SDD (`/mini-sdd`)
-
-Designed for smaller features, bug fixes, and contained refactors. The orchestrator plans directly into `.spec/<slug>/plan.md` using `sdd-plan`, pauses for your approval, and delegates execution and verification to a single `mini-sdd-developer` subagent.
-
-Mini-SDD saves the full base commit under `## Base commit` in `.spec/<slug>/history.md` before implementation and reuses it on resume. For a new branch, it captures HEAD before creating the branch. An existing branch without a recorded base requires an explicit local commit or ref from you, verified as an ancestor of the feature branch. Execution appends to the history while preserving that base and the approved plan.
-
-### Standalone Skills (`sharp-me`, `sdd-plan`, `sdd-debug`, `sdd-implement`, `sdd-code-review`, `sdd-acceptance-review`, `pr-creation`, `writing-agents`, `writing-humans`)
-
-Each standalone skill works independently of the `/sdd` and `/mini-sdd` pipelines:
-
-- **Refine or debug first:** `sharp-me` turns an idea into `.spec/<name>/brief.md`; `sdd-debug` explains a failure in `.spec/<bug-slug>/diagnosis.md`. Neither touches project code.
-- **Plan:** `sdd-plan` is the only skill that writes `.spec/<name>/plan.md`, reading the brief or diagnosis in that folder as input. The plan is never edited during execution.
-- **Execute on demand:** `sdd-implement` executes any `.spec/<name>/plan.md` (or external plan) in your current session or an isolated subagent. Both it and Mini-SDD record progress only in `.spec/<name>/history.md`.
-- **Review independently:** `sdd-code-review` evaluates technical quality; `sdd-acceptance-review` checks fulfillment of the ticket and plan, prioritizing the ticket where they conflict. Without either source or supplied criteria, acceptance review asks for criteria and waits. Each delegates to an isolated subagent and saves its report in the plan's `.spec/` folder, or creates `.spec/<topic>/` when there is no plan. Neither fixes the implementation.
-- **Write or revise:** `writing-agents` creates and revises instructions and operational content for agents; `writing-humans` creates and revises text for people to understand, preserving meaning, voice, and depth. Both apply proactively within a requested writing task, without requiring an explicit invocation or a prior draft. Creation starts from the request and available sources; revision evaluates the existing text before correcting it. `writing-humans` summarizes only when requested. New documents do not require correction reports or before/after word counts.
-
-Choose the writing skill by the content's consumer and purpose, not its author or file extension. A plan or brief that guides another agent belongs to `writing-agents`, even when a person approves it. A README explanation, a report for people, or an explanation about agents belongs to `writing-humans`. Mixed documents use each skill for the sections serving its purpose.
-
-All plugin skills and roles that produce operational artifacts or handoffs must load and apply `writing-agents` in their own writing context. This covers plans, briefs, diagnoses, specifications, tasks, histories, review reports, and execution reports, including isolated subagents. Each producer preserves its templates, evidence, IDs, status values, languages, and access limits; the writing skill does not add a separate style report to its output.
-
-To review a Mini-SDD implementation independently, supply the plan as the acceptance source and a commit range as the implementation target:
-
-```text
-/sdd-acceptance-review Check acceptance against .spec/<slug>/plan.md (all AC-NNN IDs) for <base>..<end>.
-```
-
-Replace `<base>` with the hash saved in `history.md` and `<end>` with the explicit commit you want reviewed. The reviewer checks the plan's criteria against the actual diff, implementation, and relevant checks; the developer's report does not establish compliance. Mini-SDD does not invoke this review automatically.
-
----
+sdd-flow gives your coding agent a structured way to work. Before writing code, it saves the spec or plan under `.spec/`, then hands each phase to a subagent that starts with a clean context. Every agent follows your project's `AGENTS.md` (and `CLAUDE.md` if present). Nothing is pushed: every flow ends with local commits or local changes.
 
 ## Install
-
-Run the interactive installer to choose **local** (project) or **global** (user) scope for `claude`, `gemini`, `codex`, `opencode`, `kilo`, `cursor`, `windsurf`, `antigravity`, `copilot`, or `universal`:
 
 **macOS / Linux / WSL / git-bash**
 
@@ -129,21 +27,55 @@ irm https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.ps1 -
 .\install.ps1
 ```
 
-**Native plugin / extension commands:**
+The installer asks whether to install for the current project or for your user, and which clients to set up: Claude Code, Gemini CLI, Codex, Opencode, Kilo Code, Cursor, Windsurf/Devin, Antigravity, GitHub Copilot, or any other Agent Skills client.
 
-- **Claude Code:** `/plugin marketplace add nushey/sdd-flow` then `/plugin install sdd-flow@sdd-flow`
+You can also use the native plugins:
+
+- **Claude Code:** `/plugin marketplace add nushey/sdd-flow`, then `/plugin install sdd-flow@sdd-flow`
 - **Gemini CLI:** `gemini extensions install https://github.com/nushey/sdd-flow`
-- **OpenAI Codex:** `codex plugin marketplace add nushey/sdd-flow` then `codex plugin add sdd-flow`
+- **Codex:** `codex plugin marketplace add nushey/sdd-flow`, then `codex plugin add sdd-flow`
 
-See **[INSTALL.md](./INSTALL.md)** for non-interactive CLI flags, per-client paths, and uninstall instructions.
+[INSTALL.md](./INSTALL.md) covers flags, install paths, troubleshooting, and uninstalling.
 
-### Prerequisites for `/sdd` and `/mini-sdd`
+## Skills
 
-- **`AGENTS.md` at the project root** — required precondition defining project rules and conventions (`sdd-flow` never generates it).
-- **Git repository** with at least one commit.
-- **Python 3.11+** for Full SDD's `sdd check` validator (standard library only).
+| Command | What it does |
+|---------|--------------|
+| `/sdd <feature>` | Full flow for large features: scope, design, tasks, implementation, and verification. |
+| `/mini-sdd <change>` | Short flow for small features, fixes, and refactors: one plan, one developer subagent. |
+| `/sharp-me <idea>` | Questions and refines an idea until it is well defined. Saves `brief.md`. |
+| `/sdd-plan <request>` | Writes an implementation plan without touching code. Saves `plan.md`. |
+| `/sdd-debug <issue>` | Finds and proves the root cause of a failure. Saves `diagnosis.md`. |
+| `/sdd-implement <plan>` | Implements a plan, in full or in part, and logs progress in `history.md`. Does not commit. |
+| `/sdd-code-review <request>` | Reviews code quality, tests, conventions, bugs, and security in a separate subagent. Saves `code-review.md`. |
+| `/sdd-acceptance-review <request>` | Checks the implementation against the ticket, the plan, or criteria you give it, in a separate subagent. Saves `acceptance-review.md`. |
+| `/pr-creation` | Writes a pull request description when you ask for one. |
+| `/writing-agents <request or text>` | Writes or improves instructions for agents without changing their behavior. |
+| `/writing-humans <request or text>` | Writes or improves text for people without changing its meaning. |
 
----
+The standalone skills chain together if you want: `sharp-me` or `sdd-debug` → `sdd-plan` → `sdd-implement` → `sdd-code-review` and `sdd-acceptance-review`. All of them save their output under `.spec/<name>/`. Neither review fixes code. The writing skills also apply by themselves during writing tasks, without you calling them.
+
+## How `/sdd` works
+
+1. **Triage**: you agree on scope with the agent (`intake.md`).
+2. **Init**: acceptance criteria with stable IDs (`scope.md`).
+3. **Design and tasks**: technical design and one file per task (`design.md`, `tasks/`).
+4. **Implement**: one subagent per task, one commit per task.
+5. **Verify**: tests run and the result is checked against `scope.md`, with up to three fix rounds. On success, the spec is committed locally.
+
+`/mini-sdd` skips most of this: the agent writes a plan, waits for your approval, and a single subagent implements and verifies it. Before starting, it saves the base commit in `history.md`. Mini-SDD doesn't run an acceptance review by itself; to get one, pass the plan and the commit range:
+
+```text
+/sdd-acceptance-review Check acceptance against .spec/<slug>/plan.md (all AC-NNN IDs) for <base>..<end>.
+```
+
+`<base>` is the hash saved in `history.md`, and `<end>` is the last commit you want reviewed.
+
+## Requirements for `/sdd` and `/mini-sdd`
+
+- An `AGENTS.md` at the project root with your rules and conventions. sdd-flow never creates it.
+- A git repository with at least one commit.
+- Python 3.11+ for the `/sdd` checker.
 
 ## License
 
