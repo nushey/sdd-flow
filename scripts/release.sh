@@ -104,8 +104,5 @@ git push origin --delete "$release_branch" "$source_branch"
 step "Creating GitHub Release $tag"
 gh release create "$tag" --title "$tag" --generate-notes --verify-tag
 
-step "Building OpenAI publication ZIP"
-python3 "$SCRIPT_DIR/build-openai.py" --output "$ROOT_DIR/dist/sdd-flow-openai.zip"
-
 echo
 echo "Released $tag"

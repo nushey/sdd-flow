@@ -6,5 +6,3 @@ AUDIT-REPORT.md
 
 # Python bytecode from the checker and its tests
 __pycache__/
-
-/dist/
