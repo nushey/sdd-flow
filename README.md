@@ -33,7 +33,7 @@ You can also use the native plugins:
 
 - **Claude Code:** `/plugin marketplace add nushey/sdd-flow`, then `/plugin install sdd-flow@sdd-flow`
 - **Gemini CLI:** `gemini extensions install https://github.com/nushey/sdd-flow`
-- **Codex:** `codex plugin marketplace add nushey/sdd-flow`, then `codex plugin add sdd-flow`
+- **Codex:** use the installer above and select Codex to install skills and native agent roles together. Directory installation of the roles has not been verified.
 
 [INSTALL.md](./INSTALL.md) covers flags, install paths, troubleshooting, and uninstalling.
 
@@ -76,6 +76,25 @@ The standalone skills chain together if you want: `sharp-me` or `sdd-debug` → 
 - A git repository with at least one commit.
 - Python 3.11+ for the `/sdd` checker.
 
+## Publication
+
+Build the OpenAI candidate ZIP and run local checks:
+
+```bash
+python3 scripts/build-openai.py --output /tmp/sdd-flow-openai.zip
+python3 -m unittest discover -s tests -q
+```
+
+Listing metadata lives in `integrations/openai/interface.json`; package identity
+and version come from the existing plugin manifest. To publish the public pages,
+use repository Settings → Pages → Deploy from a branch → main → /docs. Review
+the policies and verify the homepage, privacy, terms, and GitHub Issues while
+signed out before submission.
+
+Confirm submission eligibility and native agent support with OpenAI. Local
+validation does not establish directory acceptance or complete agent installation;
+users should continue using the project installer.
+
 ## License
 
-MIT
+[MIT](LICENSE)
