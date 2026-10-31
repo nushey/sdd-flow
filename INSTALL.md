@@ -37,13 +37,11 @@ sdd-flow/scripts/install.sh   # or .\sdd-flow\scripts\install.ps1
 |--------|---------|
 | Claude Code | `/plugin marketplace add nushey/sdd-flow`, then `/plugin install sdd-flow@sdd-flow` |
 | Gemini CLI | `gemini extensions install https://github.com/nushey/sdd-flow` |
-| Codex | Use the Quick install wizard and select Codex; it installs skills and native TOML roles together. |
 | Cursor | Customize → Rules → Add Rule → Remote Rule (GitHub), pointing at `https://github.com/nushey/sdd-flow` |
 | Others | `npx skills add nushey/sdd-flow` (skills only) |
 
-The OpenAI publication ZIP is a separate candidate package. Directory installation
-has not been verified to register native roles. The project installer
-remains the complete Codex installation path; no second install step is needed.
+For Codex, use the Quick install wizard and select Codex. It installs the skills
+and native TOML roles together.
 
 ## Without the wizard
 

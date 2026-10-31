@@ -29,11 +29,12 @@ irm https://raw.githubusercontent.com/nushey/sdd-flow/main/scripts/install.ps1 -
 
 The installer asks whether to install for the current project or for your user, and which clients to set up: Claude Code, Gemini CLI, Codex, Opencode, Kilo Code, Cursor, Windsurf/Devin, Antigravity, GitHub Copilot, or any other Agent Skills client.
 
-You can also use the native plugins:
+For Codex, use the installer above and select Codex to install the skills and native agent roles together.
+
+You can also use the native plugins for these clients:
 
 - **Claude Code:** `/plugin marketplace add nushey/sdd-flow`, then `/plugin install sdd-flow@sdd-flow`
 - **Gemini CLI:** `gemini extensions install https://github.com/nushey/sdd-flow`
-- **Codex:** use the installer above and select Codex to install skills and native agent roles together. Directory installation of the roles has not been verified.
 
 [INSTALL.md](./INSTALL.md) covers flags, install paths, troubleshooting, and uninstalling.
 
@@ -76,28 +77,6 @@ The standalone skills chain together if you want: `sharp-me` or `sdd-debug` → 
 - A git repository with at least one commit.
 - Python 3.11+ for the `/sdd` checker.
 
-## Publication
-
-Build the OpenAI candidate ZIP and run local checks:
-
-```bash
-python3 scripts/build-openai.py --output dist/sdd-flow-openai.zip
-python3 -m unittest discover -s tests -q
-```
-
-The release script builds this ZIP as its final step. The `dist/` directory is
-gitignored; the ZIP remains local for directory submission.
-
-Listing metadata lives in `integrations/openai/interface.json`; package identity
-and version come from the existing plugin manifest. To publish the public pages,
-use repository Settings → Pages → Deploy from a branch → main → /docs. Review
-the policies and verify the homepage, privacy, terms, and GitHub Issues while
-signed out before submission.
-
-Confirm submission eligibility and native agent support with OpenAI. Local
-validation does not establish directory acceptance or complete agent installation;
-users should continue using the project installer.
-
 ## License
 
-[MIT](LICENSE)
+MIT
