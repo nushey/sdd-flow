@@ -42,8 +42,8 @@ context, and never fetch role prompts from the internet.
    the task + design + curated context, implement, commit with conventional
    commits, fill the Implementation log. One task = one commit. Never push.
 4. **Verify** — delegate to the **sdd-verifier** role: run tests, cross-check
-   logs against git, review the diff from the base commit, and on PASS commit the
-   spec artifacts locally. The flow ends there.
+   logs against git, run the acceptance and code reviews on the diff from the base
+   commit, and on PASS commit the spec artifacts locally. The flow ends there.
 
 Max 3 failure cycles per feature. On failure the Tech Lead emits a fix task under
 `fixes/`; `design.md` stays as-is.

@@ -60,7 +60,7 @@ The standalone skills chain together if you want: `sharp-me` or `sdd-debug` → 
 2. **Init**: acceptance criteria with stable IDs (`scope.md`).
 3. **Design and tasks**: technical design and one file per task (`design.md`, `tasks/`).
 4. **Implement**: one subagent per task, one commit per task.
-5. **Verify**: tests run and the result is checked against `scope.md`, with up to three fix rounds. On success, the spec is committed locally.
+5. **Verify**: tests run, and the diff goes through the acceptance review (against `scope.md` and the tasks) and the code review. An unmet or unverified criterion, or a Critical or High finding, starts a fix round, up to three. On success, the spec is committed locally.
 
 `/mini-sdd` skips most of this: the agent writes a plan, waits for your approval, and a single subagent implements and verifies it. Before starting, it saves the base commit in `history.md`. Mini-SDD doesn't run an acceptance review by itself; to get one, pass the plan and the commit range:
 

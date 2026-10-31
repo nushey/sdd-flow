@@ -73,6 +73,8 @@ If the checker cannot run (no Python 3.11+, file missing), STOP and tell the use
         001-<slug>.md   # Tech Lead output, dev appends Implementation log
         002-<slug>.md
       verify.md         # Verifier output
+      acceptance-review.md  # Verifier output (sdd-acceptance-review)
+      code-review.md    # Verifier output (sdd-code-review)
       fixes/            # Tech Lead output on failure loops
         fix-001-<slug>.md
 ```
