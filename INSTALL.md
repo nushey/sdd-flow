@@ -1,6 +1,6 @@
 # Installing sdd-flow
 
-sdd-flow is a set of [Agent Skills](https://agentskills.io): 11 skills and 5 subagents written in Markdown. It is not an MCP server, so there is nothing to run or register in `mcpServers`.
+sdd-flow is a set of [Agent Skills](https://agentskills.io): reusable skills and specialized subagents. It is not an MCP server, so there is nothing to run or register in `mcpServers`.
 
 ## Quick install
 
@@ -37,9 +37,13 @@ sdd-flow/scripts/install.sh   # or .\sdd-flow\scripts\install.ps1
 |--------|---------|
 | Claude Code | `/plugin marketplace add nushey/sdd-flow`, then `/plugin install sdd-flow@sdd-flow` |
 | Gemini CLI | `gemini extensions install https://github.com/nushey/sdd-flow` |
-| Codex | `codex plugin marketplace add nushey/sdd-flow`, then `codex plugin add sdd-flow` |
+| Codex | Use the Quick install wizard and select Codex; it installs skills and native TOML roles together. |
 | Cursor | Customize → Rules → Add Rule → Remote Rule (GitHub), pointing at `https://github.com/nushey/sdd-flow` |
 | Others | `npx skills add nushey/sdd-flow` (skills only) |
+
+The OpenAI publication ZIP is a separate candidate package. Directory installation
+has not been verified to register native roles. The project installer
+remains the complete Codex installation path; no second install step is needed.
 
 ## Without the wizard
 

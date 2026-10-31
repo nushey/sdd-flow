@@ -21,8 +21,8 @@ usage() {
 install.sh — install sdd-flow into any supported agentic client.
 
 sdd-flow is an Agent Skills + subagents pack (agentskills.io), NOT an MCP
-server. This script copies the 10 skills into the client's skill directory and
-the 5 subagent prompts into the client's agent directory, in the right shape.
+server. This script copies the skills into the client's skill directory and
+the subagent prompts into the client's agent directory, in the right shape.
 
 Usage:
   scripts/install.sh [--client <client[,client...]|all>]
@@ -47,7 +47,7 @@ Supported clients:
   antigravity  Google Antigravity (.agents/skills & agents or ~/.gemini/config)
   copilot      GitHub Copilot (.github/skills + .github/agents)
   universal    Universal skills-only (.agents/skills or ~/.agents/skills)
-  all          All 9 full clients above
+  all          All full clients above
 
 Flags:
   --client, -c  Target client(s), comma-separated, or 'all'.
