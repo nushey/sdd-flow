@@ -1,5 +1,6 @@
 {
   "name": "sdd-flow",
+  "description": "Spec-driven development workflows powered by specialized AI agents for planning, implementation, verification, and code review.",
   "owner": {
     "name": "Nahuel Zeballos",
     "email": "zeballosnahuelfd@gmail.com"
