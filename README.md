@@ -81,9 +81,12 @@ The standalone skills chain together if you want: `sharp-me` or `sdd-debug` → 
 Build the OpenAI candidate ZIP and run local checks:
 
 ```bash
-python3 scripts/build-openai.py --output /tmp/sdd-flow-openai.zip
+python3 scripts/build-openai.py --output dist/sdd-flow-openai.zip
 python3 -m unittest discover -s tests -q
 ```
+
+The release script builds this ZIP as its final step. The `dist/` directory is
+gitignored; the ZIP remains local for directory submission.
 
 Listing metadata lives in `integrations/openai/interface.json`; package identity
 and version come from the existing plugin manifest. To publish the public pages,
