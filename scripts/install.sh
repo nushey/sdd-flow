@@ -697,7 +697,7 @@ invoke_hint() {
     antigravity) echo "  - [antigravity] Type /sdd <feature> or ask the agent to use the 'sdd' skill.";;
     copilot)     echo "  - [copilot]     Ask Copilot to run /sdd <feature> (ensure runSubagent is enabled).";;
     universal)   echo "  - [universal]   Skills-only install. sharp-me, sdd-plan, sdd-debug, sdd-implement,"
-                 echo "                  sdd-code-review, sdd-acceptance-review, pr-creation, writing-agents and writing-humans"
+                 echo "                  sdd-code-review, sdd-acceptance-review, writing-agents and writing-humans"
                  echo "                  work without role subagents; /sdd and /mini-sdd require them.";;
   esac
 }

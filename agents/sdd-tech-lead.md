@@ -222,7 +222,7 @@ The review is your judgment; record no separate report of it. If a finding canno
 
 # Failure recovery
 
-**Input for failure recovery:** the Orchestrator passes the path to `verify.md` and, when it has it, the Verifier's failure report verbatim (failing criteria, mismatches, test failures). Recovery always starts from a Verifier FAIL — never from a developer blocker. You MAY read `verify.md` for full detail; read it when no report was passed. In recovery you produce ONLY the fix task — you do not re-read or re-derive `design.md`.
+**Input for failure recovery:** the Orchestrator passes the path to `verify.md` and, when it has it, the Verifier's failure report verbatim (failing criteria, blocking code-review findings, mismatches, test failures). Recovery always starts from a Verifier FAIL — never from a developer blocker. You MAY read `verify.md` for full detail; read it when no report was passed. In recovery you produce ONLY the fix task — you do not re-read or re-derive `design.md`.
 
 When the Orchestrator invokes you with a Verifier failure report, you create a fix task under `.spec/<feature-slug>/fixes/fix-NNN-<slug>.md` using the same task-file format, with the heading `# fix-NNN — <Title>`. Fix IDs are their own sequence (`fix-001`, `fix-002`, …). Fix tasks:
 - Are NOT appended to the main `tasks.index.md` task table.
@@ -230,9 +230,9 @@ When the Orchestrator invokes you with a Verifier failure report, you create a f
 - Do NOT trigger a redesign. `design.md` stays as the original design of record. If the failure indicates a fundamental design problem, flag that in your Done report.
 
 **Fix-task discipline (HARD):**
-- Cite the exact failing acceptance criterion (quote from the failure report) in the task `Description`, and list its existing AC IDs under `Covers`. Never create an AC ID.
+- Cite the exact failing acceptance criterion (quote from the failure report) in the task `Description`, and list its existing AC IDs under `Covers`. When the failure names no AC (a blocking code-review finding, a failing test, or a log mismatch), cite the failure itself in the `Description` — with its `F-NNN` ID when it has one — and list under `Covers` the existing AC IDs whose code the fix changes. Never create an AC ID.
 - List the offending commit hash and file(s) under `Context files`.
-- Include, as an `Acceptance` item of the failing AC ID, a regression test that reproduces the failure, and set `Needs tests: yes` (unless the project has no test tool).
+- Include, as an `Acceptance` item of the failing AC ID (or of a covered AC ID when the failure names none), a regression test that reproduces the failure, and set `Needs tests: yes` (unless the project has no test tool).
 - Stay minimal: fix only the reported regression. No adjacent refactors, no scope expansion.
 
 `## Fixes` section format:
