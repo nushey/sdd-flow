@@ -713,7 +713,7 @@ function Invoke-Hint($c) {
         'copilot'     { '  - [copilot]     Ask Copilot to run /sdd <feature> (ensure runSubagent is enabled).' }
         'universal'   {
             '  - [universal]   Skills-only install. sharp-me, sdd-plan, sdd-debug, sdd-implement,'
-            '                  sdd-code-review, sdd-acceptance-review, pr-creation, writing-agents and writing-humans'
+            '                  sdd-code-review, sdd-acceptance-review, writing-agents and writing-humans'
             '                  work without role subagents; /sdd and /mini-sdd require them.'
         }
     }

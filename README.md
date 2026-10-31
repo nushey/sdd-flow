@@ -49,7 +49,6 @@ You can also use the native plugins:
 | `/sdd-implement <plan>` | Implements a plan, in full or in part, and logs progress in `history.md`. Does not commit. |
 | `/sdd-code-review <request>` | Reviews code quality, tests, conventions, bugs, and security in a separate subagent. Saves `code-review.md`. |
 | `/sdd-acceptance-review <request>` | Checks the implementation against the ticket, the plan, or criteria you give it, in a separate subagent. Saves `acceptance-review.md`. |
-| `/pr-creation` | Writes a pull request description when you ask for one. |
 | `/writing-agents <request or text>` | Writes or improves instructions for agents without changing their behavior. |
 | `/writing-humans <request or text>` | Writes or improves text for people without changing its meaning. |
 

@@ -114,7 +114,7 @@ Run the same install command again. It replaces what it installed before and kee
 | `git fetch/checkout/clone failed; nothing was installed` | Fix the network or the local changes in the cache, then retry. |
 | Installed in the wrong project | Use `--target /path/to/project` (bash) or `-Target` (PowerShell). |
 | `-Global` on Windows ignores `$env:HOME` | Expected: it always writes to your real user profile. Use `-Target <folder>` to test somewhere else. |
-| You want to push or open a PR | Do it yourself. You can use `/pr-creation` for the description. |
+| You want to push or open a PR | Do it yourself: SDD and Mini-SDD end with local commits. |
 
 ## Uninstall
 
